@@ -3,291 +3,136 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
 <title>Confirmação de Aula • BeachFlow</title>
-
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
-
-body{
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-background:#f5f5f5;
-min-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-padding:20px;
-color:#111;
-}
-
-.card{
-width:100%;
-max-width:420px;
-background:#fff;
-border-radius:24px;
-padding:28px;
-box-shadow:0 10px 30px rgba(0,0,0,.08);
-}
-
-.badge{
-font-size:12px;
-font-weight:700;
-letter-spacing:.12em;
-text-transform:uppercase;
-color:#0f766e;
-margin-bottom:12px;
-}
-
-h1{
-font-size:30px;
-line-height:1.1;
-margin-bottom:10px;
-}
-
-.desc{
-font-size:15px;
-line-height:1.5;
-color:#666;
-margin-bottom:24px;
-}
-
-.info{
-background:#f7f7f7;
-border-radius:18px;
-padding:18px;
-margin-bottom:24px;
-}
-
-.row{
-margin-bottom:12px;
-}
-
-.row:last-child{
-margin-bottom:0;
-}
-
-.label{
-font-size:12px;
-font-weight:700;
-text-transform:uppercase;
-letter-spacing:.08em;
-color:#777;
-margin-bottom:4px;
-}
-
-.value{
-font-size:16px;
-font-weight:600;
-}
-
-button{
-width:100%;
-height:58px;
-border:none;
-border-radius:18px;
-font-size:16px;
-font-weight:700;
-cursor:pointer;
-transition:.2s;
-}
-
-.confirm{
-background:#16a34a;
-color:#fff;
-margin-bottom:12px;
-}
-
-.confirm:hover{
-opacity:.92;
-}
-
-.decline{
-background:#fff;
-border:2px solid #ddd;
-color:#222;
-}
-
-.decline:hover{
-background:#f3f3f3;
-}
-
-.loading{
-text-align:center;
-font-size:16px;
-font-weight:600;
-}
-
-.result{
-text-align:center;
-}
-
-.result h2{
-font-size:28px;
-margin-bottom:12px;
-}
-
-.result p{
-font-size:15px;
-line-height:1.5;
-color:#666;
-}
-
-.error{
-color:#b91c1c;
-}
-
-.success{
-color:#15803d;
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;color:#111}
+.card{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.badge{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#0f766e;margin-bottom:12px}
+h1{font-size:30px;line-height:1.1;margin-bottom:10px}
+.desc{font-size:15px;line-height:1.5;color:#666;margin-bottom:24px}
+.info{background:#f7f7f7;border-radius:18px;padding:18px;margin-bottom:24px}
+.row{margin-bottom:12px}.row:last-child{margin-bottom:0}
+.label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#777;margin-bottom:4px}
+.value{font-size:16px;font-weight:600}
+button{width:100%;height:58px;border:none;border-radius:18px;font-size:16px;font-weight:700;cursor:pointer}
+.confirm{background:#16a34a;color:#fff;margin-bottom:12px}
+.decline{background:#fff;border:2px solid #ddd;color:#222}
+.loading{text-align:center;font-size:16px;font-weight:600}
+.result{text-align:center}.result h2{font-size:28px;margin-bottom:12px}.result p{font-size:15px;line-height:1.5;color:#666}
+.error{color:#b91c1c}.success{color:#15803d}
 </style>
 </head>
-
 <body>
 
 <div class="card" id="app">
-<div class="loading">Carregando confirmação...</div>
+  <div class="loading">Carregando confirmação...</div>
 </div>
 
-<script type="module">
+<script>
+const SUPABASE_URL = 'https://btjsweysefmbceqqlyxx.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_hLf051iu9ufCiqo7N6Vpvw_wvMXsbN4';
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const SUPABASE_URL = 'COLE_SUA_URL_SUPABASE'
-const SUPABASE_ANON_KEY = 'COLE_SUA_ANON_KEY'
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-const app = document.getElementById('app')
-
-const token = new URLSearchParams(window.location.search).get('token')
-
-if(!token){
-renderError('Link inválido.')
-}else{
-loadConfirmation()
-}
-
-async function loadConfirmation(){
-
-const { data, error } = await supabase.rpc(
-'get_class_confirmation',
-{ p_token: token }
-)
-
-if(error || !data){
-renderError('Confirmação não encontrada.')
-return
-}
-
-renderConfirmation(data)
-}
-
-function renderConfirmation(data){
-
-app.innerHTML = `
-<div class="badge">BeachFlow</div>
-
-<h1>Confirmar presença</h1>
-
-<p class="desc">
-Confirme sua presença na aula abaixo.
-</p>
-
-<div class="info">
-
-<div class="row">
-<div class="label">Aluno</div>
-<div class="value">${data.student_name}</div>
-</div>
-
-<div class="row">
-<div class="label">Turma</div>
-<div class="value">${data.class_name}</div>
-</div>
-
-<div class="row">
-<div class="label">Data</div>
-<div class="value">${data.session_date}</div>
-</div>
-
-<div class="row">
-<div class="label">Horário</div>
-<div class="value">${data.start_time}</div>
-</div>
-
-</div>
-
-<button class="confirm" id="confirmBtn">
-Confirmar presença
-</button>
-
-<button class="decline" id="declineBtn">
-Não poderei ir
-</button>
-`
-
-document
-.getElementById('confirmBtn')
-.addEventListener('click',()=>respond('confirmed'))
-
-document
-.getElementById('declineBtn')
-.addEventListener('click',()=>respond('declined'))
-}
-
-async function respond(status){
-
-app.innerHTML = `
-<div class="loading">
-Salvando resposta...
-</div>
-`
-
-const { data, error } = await supabase.rpc(
-'respond_class_confirmation',
-{
-p_token: token,
-p_status: status
-}
-)
-
-if(error){
-renderError('Erro ao salvar resposta.')
-return
-}
-
-renderSuccess(
-status === 'confirmed'
-? 'Presença confirmada!'
-: 'Ausência registrada.'
-)
-}
+const app = document.getElementById('app');
+const token = new URLSearchParams(window.location.search).get('token');
 
 function renderError(message){
-app.innerHTML = `
-<div class="result">
-<h2 class="error">Ops</h2>
-<p>${message}</p>
-</div>
-`
+  app.innerHTML = `<div class="result"><h2 class="error">Ops</h2><p>${message}</p></div>`;
 }
 
 function renderSuccess(message){
-app.innerHTML = `
-<div class="result">
-<h2 class="success">${message}</h2>
-
-<p>
-Sua resposta foi registrada no BeachFlow.
-</p>
-</div>
-`
+  app.innerHTML = `<div class="result"><h2 class="success">${message}</h2><p>Sua resposta foi registrada no BeachFlow.</p></div>`;
 }
 
+async function rpc(functionName, body){
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${functionName}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || 'Erro na requisição');
+  }
+
+  return await response.json();
+}
+
+async function loadConfirmation(){
+  if(!token){
+    renderError('Link inválido.');
+    return;
+  }
+
+  try{
+    const data = await rpc('get_class_confirmation', { p_token: token });
+
+    if(!data){
+      renderError('Confirmação não encontrada.');
+      return;
+    }
+
+    renderConfirmation(data);
+
+  }catch(error){
+    console.error(error);
+    renderError('Confirmação não encontrada ou erro ao conectar com o BeachFlow.');
+  }
+}
+
+function renderConfirmation(data){
+  app.innerHTML = `
+    <div class="badge">BeachFlow</div>
+    <h1>Confirmar presença</h1>
+    <p class="desc">Confirme sua presença na aula abaixo.</p>
+
+    <div class="info">
+      <div class="row">
+        <div class="label">Aluno</div>
+        <div class="value">${data.student_name || '-'}</div>
+      </div>
+      <div class="row">
+        <div class="label">Turma</div>
+        <div class="value">${data.class_name || '-'}</div>
+      </div>
+      <div class="row">
+        <div class="label">Data</div>
+        <div class="value">${data.session_date || '-'}</div>
+      </div>
+      <div class="row">
+        <div class="label">Horário</div>
+        <div class="value">${data.start_time || '-'}</div>
+      </div>
+    </div>
+
+    <button class="confirm" onclick="respond('confirmed')">Confirmar presença</button>
+    <button class="decline" onclick="respond('declined')">Não poderei ir</button>
+  `;
+}
+
+async function respond(status){
+  app.innerHTML = `<div class="loading">Salvando resposta...</div>`;
+
+  try{
+    await rpc('respond_class_confirmation', {
+      p_token: token,
+      p_status: status
+    });
+
+    renderSuccess(status === 'confirmed' ? 'Presença confirmada!' : 'Ausência registrada.');
+
+  }catch(error){
+    console.error(error);
+    renderError('Erro ao salvar resposta.');
+  }
+}
+
+loadConfirmation();
 </script>
 
 </body>
