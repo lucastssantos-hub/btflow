@@ -1,4 +1,4 @@
-const CACHE = 'beachflow-v2-cycle-contextual';
+const CACHE = 'beachflow-v3-radar-turma-completa';
 const BASE = '/btflow';
 const ASSETS = [
   BASE + '/',
