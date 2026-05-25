@@ -688,7 +688,8 @@
     function classAiDiagnosisHtml(ids,ctx=null){
       const d=classAiDiagnosis(ids,ctx);
       const badge=ctx?.scout_validado?'<span class="badge">Situação de jogo validada pelo Scout</span>':d.confidence==="baixa"?'<span class="badge warn">Base técnica inicial por autoavaliação</span>':d.confidence==="média"?'<span class="badge cyan">Base técnica mista</span>':'<span class="badge">Base técnica validada</span>';
-      return`<div class="callout"><p class="eyebrow" style="color:var(--accent)">Diagnóstico antes do treino</p><p class="muted" style="line-height:1.45;margin:.25rem 0 .7rem">${esc(d.text)}</p>${badge}</div>`;
+      const fullClassNote=ctx?.alunos_considerados?.length?`<p class="muted" style="line-height:1.45;margin:.6rem 0 0"><strong>Base do ciclo:</strong> ${ctx.alunos_considerados.length} aluno(s) matriculado(s). Confirmações atuais: ${(ctx.alunos_confirmados||[]).length}/${ctx.alunos_considerados.length}. A confirmação não filtra o radar.</p>`:"";
+      return`<div class="callout"><p class="eyebrow" style="color:var(--accent)">Diagnóstico antes do treino</p><p class="muted" style="line-height:1.45;margin:.25rem 0 .7rem">${esc(d.text)}</p>${badge}${fullClassNote}</div>`;
     }
     function weak(sc){const v=fundamentals.filter(f=>sc[f]>0);return v.length?v.reduce((a,b)=>sc[b]<sc[a]?b:a,v[0]):"Consistência"}function strong(sc){const v=fundamentals.filter(f=>sc[f]>0);return v.length?v.reduce((a,b)=>sc[b]>sc[a]?b:a,v[0]):"--"}
     function scoutSummary(sid){const r=state.scout_events.filter(e=>e.student_id===sid);return{total:r.length,errors:r.filter(e=>e.kind==="error").length,winners:r.filter(e=>e.kind==="winner").length,main:fundamentals.map(f=>({f,n:r.filter(e=>e.fundamental===f).length})).sort((a,b)=>b.n-a.n)[0]?.f||""}}
@@ -1101,7 +1102,7 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
     function prepararContextoIALocal(classSessionId){
       const s=state.sessions.find(x=>x.id===classSessionId);
       if(!s)return null;
-      const c=klass(s.class_id),confirmedIds=Object.entries(s.confirmations||{}).filter(([,status])=>status==="confirmed").map(([sid])=>sid),enrolledIds=studentsFor(s.class_id).map(st=>st.id),ids=confirmedIds.length?confirmedIds:enrolledIds,planningScope=confirmedIds.length?"alunos confirmados":"alunos matriculados previstos";
+      const c=klass(s.class_id),confirmedIds=Object.entries(s.confirmations||{}).filter(([,status])=>status==="confirmed").map(([sid])=>sid),enrolledIds=studentsFor(s.class_id).map(st=>st.id),ids=enrolledIds,planningScope="todos os alunos matriculados na turma";
       if(!ids.length)return null;
       const av=avg(ids),tech=technicalRadarFromApp(av),entries=evaluatedTechnicalEntries(tech,av),critical=entries.reduce((a,b)=>b[1]<a[1]?b:a,entries[0]);
       // Detecta fonte do radar e calcula gap de percepção
@@ -1124,7 +1125,7 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
       const semanticRadar=semantic?Object.entries(semantic.radar).filter(([,v])=>v!=null).map(([key,value])=>`${key} ${value.toFixed(1)}`).join(", "):"sem ações contextuais";
       const diagTurma=classAiDiagnosis(ids,{erros_frequentes:scoutMsg});
       const scoutValidated=!!semantic&&contextualEvents.length>=8;
-      return enrichManualContext({nivel:c?.level||student(ids[0])?.level||"intermediario",fundamento_critico_radar:friendlyFund[critical[0]]||critical[0],fundamento_app:appFund[critical[0]]||"Consistência",nota_media_radar:(critical[1]||5).toFixed(1),erros_frequentes:scoutMsg,diagnostico_turma:diagTurma.text,confianca_radar:diagTurma.confidence,fonte_radar:diagTurma.source,top_gaps_radar:diagTurma.topGaps.map(x=>`${x.fundamental} ${x.score.toFixed(1)}`).join(", "),radar_comportamental_scout:semanticRadar,transicao_quebrada_scout:scoutValidated?semantic.transition:"hipótese a validar ao final do ciclo",perfil_scout:semantic?.profile||"sem dados",observacoes_alunos:`Escopo do ciclo: ${planningScope}. Fonte do radar: ${radarSource}.${gapMsg?" Gaps de percepção: "+gapMsg+".":""} Diagnóstico da turma: ${diagTurma.text} Evitar sobrecarga articular repetitiva se houver histórico de dores.${missing.length?` Fundamentos sem nota consolidada receberam 5.0 automaticamente: ${missing.join(", ")}.`:""}`,materiais_complementares:state.aiMaterials||"",aprendizado_compartilhado:localSharedKnowledge(),alunos_confirmados:ids,scout_erros:errors.length,scout_winners:winners,zona_critica:zone||"",scout_amostra:contextualEvents.length,scout_validado:scoutValidated});
+      return enrichManualContext({nivel:c?.level||student(ids[0])?.level||"intermediario",fundamento_critico_radar:friendlyFund[critical[0]]||critical[0],fundamento_app:appFund[critical[0]]||"Consistência",nota_media_radar:(critical[1]||5).toFixed(1),erros_frequentes:scoutMsg,diagnostico_turma:diagTurma.text,confianca_radar:diagTurma.confidence,fonte_radar:diagTurma.source,top_gaps_radar:diagTurma.topGaps.map(x=>`${x.fundamental} ${x.score.toFixed(1)}`).join(", "),radar_comportamental_scout:semanticRadar,transicao_quebrada_scout:scoutValidated?semantic.transition:"hipótese a validar ao final do ciclo",perfil_scout:semantic?.profile||"sem dados",observacoes_alunos:`Escopo do ciclo: ${planningScope}. Confirmações atuais: ${confirmedIds.length}/${ids.length}. Fonte do radar: ${radarSource}.${gapMsg?" Gaps de percepção: "+gapMsg+".":""} Diagnóstico da turma: ${diagTurma.text} Evitar sobrecarga articular repetitiva se houver histórico de dores.${missing.length?` Fundamentos sem nota consolidada receberam 5.0 automaticamente: ${missing.join(", ")}.`:""}`,materiais_complementares:state.aiMaterials||"",aprendizado_compartilhado:localSharedKnowledge(),alunos_confirmados:confirmedIds,alunos_considerados:ids,scout_erros:errors.length,scout_winners:winners,zona_critica:zone||"",scout_amostra:contextualEvents.length,scout_validado:scoutValidated});
     }
     async function prepararContextoIA(classSessionId){
       if(!supabaseClient)return prepararContextoIALocal(classSessionId);
@@ -1132,11 +1133,14 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
         const {data:confirmacoes,error:errorConfirm}=await supabaseClient.from("class_confirmations").select("student_id, students(name, level)").eq("session_id",classSessionId).eq("status","confirmed");
         if(errorConfirm)throw errorConfirm;
         const localSession=state.sessions.find(x=>x.id===classSessionId);
-        let ids=confirmacoes?.length?confirmacoes.map(c=>c.student_id):[];
-        let nivel=confirmacoes?.[0]?.students?.level||"intermediario";
-        let planningScope=ids.length?"alunos confirmados":"alunos matriculados previstos";
-        if(!ids.length&&localSession?.class_id){
-          ids=studentsFor(localSession.class_id).map(st=>st.id);
+        const confirmedIds=confirmacoes?.length?confirmacoes.map(c=>c.student_id):[];
+        let ids=localSession?.class_id?studentsFor(localSession.class_id).map(st=>st.id):[];
+        let nivel=localSession?.class_id?klass(localSession.class_id)?.level||student(ids[0])?.level||"intermediario":confirmacoes?.[0]?.students?.level||"intermediario";
+        let planningScope=ids.length?"todos os alunos matriculados na turma":"alunos confirmados (matrícula local indisponível)";
+        if(!ids.length){
+          ids=confirmedIds;
+        }
+        if(localSession?.class_id){
           nivel=klass(localSession.class_id)?.level||student(ids[0])?.level||nivel;
         }
         if(!ids.length){console.warn("Nenhum aluno confirmado ou matriculado para esta aula ainda.");return null}
@@ -1183,7 +1187,7 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
         const remoteNames=ids.map(id=>student(id)?.name).filter(Boolean);
         const diagTurma={...remoteMeta,topGaps:remoteRank.map(([fundamental,score])=>({fundamental,score})),text:`Alunos considerados: ${remoteNames.join(", ")||ids.length+" aluno(s)"}. Fonte do radar: ${remoteMeta.source}. Confiança: ${remoteMeta.confidence}. Autoavaliações: ${remoteMeta.blindStudentsCount}/${ids.length}. Avaliações do professor: ${remoteMeta.teacherStudentsCount}/${ids.length}. Top gaps: ${remoteRank.map(([f,v])=>`${f} ${v.toFixed(1)}`).join(", ")||"sem dados"}. Scout: ${scoutMsg}`};
         const scoutValidated=!!semantic&&semanticRows.length>=8;
-        return enrichManualContext({nivel,fundamento_critico_radar:friendlyFund[critical[0]]||critical[0],fundamento_app:appFund[critical[0]]||"Consistência",nota_media_radar:(critical[1]||5).toFixed(1),erros_frequentes:scoutMsg,diagnostico_turma:diagTurma.text,confianca_radar:diagTurma.confidence,fonte_radar:diagTurma.source,top_gaps_radar:diagTurma.topGaps.map(x=>`${x.fundamental} ${x.score.toFixed(1)}`).join(", "),radar_comportamental_scout:semanticRadar,transicao_quebrada_scout:scoutValidated?semantic.transition:"hipótese a validar ao final do ciclo",perfil_scout:semantic?.profile||"sem dados",observacoes_alunos:`Escopo do ciclo: ${planningScope}. Fonte do radar: ${radarSource}.${gapMsg?" Gaps de percepção: "+gapMsg+".":""} Diagnóstico da turma: ${diagTurma.text} Evitar sobrecarga articular repetitiva se houver histórico de dores.${missing.length?` Fundamentos sem nota consolidada receberam 5.0 automaticamente: ${missing.join(", ")}.`:""}`,materiais_complementares:state.aiMaterials||"",aprendizado_compartilhado:shared,alunos_confirmados:ids,scout_erros:(erros||[]).length,scout_amostra:semanticRows.length,scout_validado:scoutValidated});
+        return enrichManualContext({nivel,fundamento_critico_radar:friendlyFund[critical[0]]||critical[0],fundamento_app:appFund[critical[0]]||"Consistência",nota_media_radar:(critical[1]||5).toFixed(1),erros_frequentes:scoutMsg,diagnostico_turma:diagTurma.text,confianca_radar:diagTurma.confidence,fonte_radar:diagTurma.source,top_gaps_radar:diagTurma.topGaps.map(x=>`${x.fundamental} ${x.score.toFixed(1)}`).join(", "),radar_comportamental_scout:semanticRadar,transicao_quebrada_scout:scoutValidated?semantic.transition:"hipótese a validar ao final do ciclo",perfil_scout:semantic?.profile||"sem dados",observacoes_alunos:`Escopo do ciclo: ${planningScope}. Confirmações atuais: ${confirmedIds.length}/${ids.length}. Fonte do radar: ${radarSource}.${gapMsg?" Gaps de percepção: "+gapMsg+".":""} Diagnóstico da turma: ${diagTurma.text} Evitar sobrecarga articular repetitiva se houver histórico de dores.${missing.length?` Fundamentos sem nota consolidada receberam 5.0 automaticamente: ${missing.join(", ")}.`:""}`,materiais_complementares:state.aiMaterials||"",aprendizado_compartilhado:shared,alunos_confirmados:confirmedIds,alunos_considerados:ids,scout_erros:(erros||[]).length,scout_amostra:semanticRows.length,scout_validado:scoutValidated});
       }catch(err){console.error("Erro ao processar dados do Radar para a IA:",err);return null}
     }
     function clampScore(v){return Math.max(0,Math.min(10,Math.round(v*10)/10))}
@@ -1764,7 +1768,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
         const materials=aiMaterialsHtml();
         const allIds=studentsFor(id).map(x=>x.id);
         const confirmedIds=allIds.filter(sid=>s.confirmations[sid]==="confirmed");
-        const ids=confirmedIds.length?confirmedIds:allIds,av=avg(ids);
+        const ids=allIds,av=avg(ids);
         const aiContext=prepararContextoIALocal(s.id);
         const diagnosticHtml=ids.length?classAiDiagnosisHtml(ids,aiContext):"";
         const current=state.cycles[id]||null,duration=current?.duration||2;
@@ -1780,7 +1784,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
         aiPane.innerHTML=`${materials}${diagnosticHtml}${durationControl}${content}<div class="grid2"><button class="btn ghost" data-demo-ia="amarelo">Simular Amarelo</button><button class="btn ghost" data-demo-ia="verde">Simular Verde</button><button class="btn ghost" data-demo-ia="azul">Simular Azul</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div><button class="btn primary" id="llmPlan">Gerar ciclo com IA</button><button class="btn outline" id="regenPlan">Gerar ciclo local</button>${current?`<div class="grid2"><button class="btn outline" id="prevWeek">Semana anterior</button><button class="btn outline" id="nextWeek">Próxima semana</button></div><button class="btn outline" id="editPlan">Editar ciclo</button><button class="btn outline" id="zapClass">Enviar aula atual no WhatsApp</button>`:""}`;
         wireAiMaterials();
         aiPane.querySelectorAll("[data-demo-ia]").forEach(b=>b.onclick=()=>{if(b.dataset.demoIa==="clear")return renderCycle();simularTreinoIA(b.dataset.demoIa,document.getElementById("plano-ia-conteudo"),Number(document.getElementById("cycleDuration").value));toast("Simulação de ciclo gerada.")});
-        regenPlan.onclick=async()=>{const baseCtx=prepararContextoIALocal(s.id);if(!baseCtx)return toast("Não encontrei dados para gerar o ciclo.");const ctx={...baseCtx,cycle_duration:Number(document.getElementById("cycleDuration").value)},cycle=buildCycle(ctx,ctx.cycle_duration,id);state.cycles[id]=cycle;save();await saveCycleRemote(id,cycle,cycleMarkdown(cycle));renderCycle();toast(confirmedIds.length?"Ciclo criado com alunos confirmados.":"Ciclo pré-aula criado com alunos matriculados.")};
+        regenPlan.onclick=async()=>{const baseCtx=prepararContextoIALocal(s.id);if(!baseCtx)return toast("Não encontrei dados para gerar o ciclo.");const ctx={...baseCtx,cycle_duration:Number(document.getElementById("cycleDuration").value)},cycle=buildCycle(ctx,ctx.cycle_duration,id);state.cycles[id]=cycle;save();await saveCycleRemote(id,cycle,cycleMarkdown(cycle));renderCycle();toast("Ciclo criado com a turma matriculada completa.")};
         llmPlan.onclick=async()=>{const ctx={...aiContext,cycle_duration:Number(document.getElementById("cycleDuration").value)},cycle=buildCycle(ctx,ctx.cycle_duration,id);const md=await dispararGeradorTreinoIA(s.id,document.getElementById("plano-ia-conteudo"),id,cycle);if(md){cycle.markdown=md;cycle.updated_at=new Date().toISOString();state.cycles[id]=cycle;save();renderCycle();toast(AI_CFG.endpoint?"Ciclo gerado pela IA.":"Endpoint de IA não configurado: usei o ciclo local.")}};
         if(current){
           editPlan.onclick=()=>{document.getElementById("planEditBox").classList.remove("hidden");document.getElementById("plano-ia-conteudo").classList.add("hidden");toast("Edite o ciclo e salve para ensinar a IA.")};
