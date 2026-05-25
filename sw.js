@@ -1,4 +1,4 @@
-const CACHE = 'beachflow-v1';
+const CACHE = 'beachflow-v2-cycle-contextual';
 const BASE = '/btflow';
 const ASSETS = [
   BASE + '/',
@@ -6,8 +6,7 @@ const ASSETS = [
   BASE + '/supabase-config.js',
   BASE + '/manifest.webmanifest',
   BASE + '/icons/icon-192.png',
-  BASE + '/icons/icon-512.png',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+  BASE + '/icons/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
