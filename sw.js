@@ -1,4 +1,4 @@
-const CACHE = 'beachflow-v5-scout-historico';
+const CACHE = 'beachflow-v6-impacto-scout';
 const BASE = '/btflow';
 const ASSETS = [
   BASE + '/',
