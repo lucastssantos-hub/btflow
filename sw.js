@@ -1,10 +1,11 @@
-const CACHE = 'beachflow-v13-habito-persistencia';
+const CACHE = 'beachflow-v14-motor-inferencia';
 const asset = path => new URL(path, self.registration.scope).toString();
 const ASSETS = [
   asset('./'),
   asset('./index.html'),
   asset('./confirmacao-aula.html'),
   asset('./supabase-config.js'),
+  asset('./beachflow-pedagogy-ontology.js'),
   asset('./manifest.webmanifest'),
   asset('./icons/icon-192.png'),
   asset('./icons/icon-512.png')
