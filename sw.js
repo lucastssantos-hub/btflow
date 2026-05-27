@@ -1,12 +1,13 @@
-const CACHE = 'beachflow-v12-motor-ux-mobile';
-const BASE = '/btflow';
+const CACHE = 'beachflow-v13-habito-persistencia';
+const asset = path => new URL(path, self.registration.scope).toString();
 const ASSETS = [
-  BASE + '/',
-  BASE + '/index.html',
-  BASE + '/supabase-config.js',
-  BASE + '/manifest.webmanifest',
-  BASE + '/icons/icon-192.png',
-  BASE + '/icons/icon-512.png'
+  asset('./'),
+  asset('./index.html'),
+  asset('./confirmacao-aula.html'),
+  asset('./supabase-config.js'),
+  asset('./manifest.webmanifest'),
+  asset('./icons/icon-192.png'),
+  asset('./icons/icon-512.png')
 ];
 
 self.addEventListener('install', e => {
@@ -29,10 +30,28 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('supabase.co')) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    e.respondWith(fetch(e.request));
+    return;
+  }
+  if (e.request.mode === 'navigate' || e.request.url.endsWith('/index.html') || e.request.url.includes('/confirmacao-aula.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(e.request).then(cached => cached || caches.match(asset('./index.html'))))
+    );
     return;
   }
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    caches.match(e.request).then(cached => {
+      const network = fetch(e.request).then(response => {
+        if (response.ok) caches.open(CACHE).then(cache => cache.put(e.request, response.clone()));
+        return response;
+      });
+      return cached || network;
+    })
   );
 });
