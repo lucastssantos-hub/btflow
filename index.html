@@ -70,7 +70,6 @@
           <div class="cta"><button class="btn primary" data-create="class">+ Turma</button><button class="btn ghost" data-create="student">+ Aluno</button><button class="btn outline" data-create="eval">Avaliar</button></div>
         </header>
         <section class="stats"><article class="card stat"><span>◴</span><strong id="stClasses" class="text-glow">0</strong><p>Turmas hoje</p></article><article class="card stat"><span>♙</span><strong id="stStudents">0</strong><p>Alunos</p></article><article class="card stat"><span>↗</span><strong id="stOcc">0%</strong><p>Ocupação</p></article></section>
-        <div id="syncBanner" class="callout hidden"></div>
         <section><div class="section-head"><h2>Agenda do dia</h2><button class="btn outline" data-create="class">+ turma</button></div><div id="agenda" class="list"></div></section>
         <section><div class="section-head"><h2>Ações rápidas</h2><button class="btn outline" data-create="ops">+ ação</button></div><div id="ops" class="list"></div></section>
       </section>
@@ -116,7 +115,7 @@
   <div id="toast" class="toast">Tudo certo.</div>
 
   <script>
-    const KEY="beachflow_publicar_v2",ACCOUNT_PREFIX="beachflow_account_v2_",PLAN_TEMPLATE_VERSION="cycle-contextual-v10",GOAL=18000,today=new Date(),weekday=today.getDay();
+    const KEY="beachflow_publicar_v2",ACCOUNT_PREFIX="beachflow_account_v2_",PLAN_TEMPLATE_VERSION="cycle-contextual-v9",GOAL=18000,today=new Date(),weekday=today.getDay();
     const SUPA_CFG=window.BEACHFLOW_SUPABASE||{};
     const supabaseClient=SUPA_CFG.url&&SUPA_CFG.anonKey&&window.supabase?window.supabase.createClient(SUPA_CFG.url,SUPA_CFG.anonKey):null;
     const AI_CFG=window.BEACHFLOW_AI||{};
@@ -167,7 +166,7 @@
         // Puxa avaliações
         const {data:evals} = await supabaseClient
           .from("evaluations").select("*").eq("teacher_id", user.id)
-          .order("created_at",{ascending:true}).limit(2000);
+          .order("created_at",{ascending:false}).limit(2000);
         if(evals?.length){
           state.evals = evals.map(e=>({
             id:e.id, student_id:e.student_id,
@@ -241,7 +240,7 @@
         // Recupera o ciclo ativo mais recente de cada turma sem exigir nova tabela.
         const {data:cycleRows} = await supabaseClient
           .from("ai_drills").select("class_id,payload_json,created_at")
-          .eq("teacher_id",user.id).eq("knowledge_version",PLAN_TEMPLATE_VERSION)
+          .eq("teacher_id",user.id).eq("knowledge_version","cycle-contextual-v9")
           .order("created_at",{ascending:false}).limit(100);
         state.cycles=state.cycles||{};
         (cycleRows||[]).forEach(row=>{
@@ -253,12 +252,10 @@
 
         // Normaliza e salva localmente
         state = normalizeState(state);
-        setSyncStatus("ok","Dados sincronizados neste aparelho.");
         save();
         return true;
       }catch(err){
         console.warn("syncPull falhou:", err);
-        setSyncStatus("error","Sem sincronização com o banco. Seus dados novos podem não aparecer em outro aparelho.");
         return false;
       }
     }
@@ -267,14 +264,12 @@
       if(!supabaseClient) return s.id;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return s.id;
-      syncPushStudent.lastError="";
       const {data, error} = await supabaseClient.from("students").upsert({
         id: s.id, teacher_id: user.id,
         name: s.name, phone: s.phone||null,
         level: s.level||"iniciante"
       },{onConflict:"id"}).select("id").single();
-      if(error){ syncPushStudent.lastError=error.message||""; console.warn("pushStudent falhou:", error.message); setSyncStatus("error","Aluno salvo apenas neste aparelho. Tente sincronizar novamente."); return false; }
-      setSyncStatus("ok","Aluno salvo no Supabase.");
+      if(error){ console.warn("pushStudent falhou:", error.message); return s.id; }
       return data.id;
     }
 
@@ -289,8 +284,7 @@
         capacity: +c.capacity||4,
         focus_fundamental: c.focus||null
       },{onConflict:"id"}).select("id").single();
-      if(error){ console.warn("pushClass falhou:", error.message); setSyncStatus("error","Turma salva apenas neste aparelho. Tente sincronizar novamente."); return false; }
-      setSyncStatus("ok","Turma salva no Supabase.");
+      if(error){ console.warn("pushClass falhou:", error.message); return c.id; }
       return data.id;
     }
 
@@ -298,11 +292,9 @@
       if(!supabaseClient) return;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
-      const {error}=await supabaseClient.from("class_enrollments").upsert({
+      await supabaseClient.from("class_enrollments").upsert({
         teacher_id: user.id, class_id: classId, student_id: studentId
       },{onConflict:"class_id,student_id"});
-      if(error){setSyncStatus("error","Matrícula pendente de sincronização.");return false}
-      return true;
     }
     async function syncDeleteEnrollment(classId, studentId){
       if(!supabaseClient||!classId||!studentId) return;
@@ -315,26 +307,22 @@
       if(!supabaseClient) return;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
-      const {error}=await supabaseClient.from("evaluations").upsert({
+      await supabaseClient.from("evaluations").upsert({
         id: e.id, teacher_id: user.id, student_id: e.student_id,
         evaluator: e.evaluator||"teacher",
         fundamental: e.fundamental, score: +e.score
       },{onConflict:"id"});
-      if(error){setSyncStatus("error","Avaliação pendente de sincronização.");return false}
-      return true;
     }
 
     async function syncPushPayment(p){
       if(!supabaseClient) return;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
-      const {error}=await supabaseClient.from("payments").upsert({
+      await supabaseClient.from("payments").upsert({
         id: p.id, teacher_id: user.id, student_id: p.student_id,
         amount: +p.amount, due_date: p.due||iso(),
         status: p.status||"pendente", pix_code: p.pix||null
       },{onConflict:"id"});
-      if(error){setSyncStatus("error","Pagamento pendente de sincronização.");return false}
-      return true;
     }
 
     const isDbId=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||""));
@@ -357,9 +345,7 @@
         ["team_a_names","team_b_names","score_mode","ended","ended_at"].forEach(k=>delete compatible[k]);
         ({error}=await supabaseClient.from("scout_matches").upsert(compatible,{onConflict:"id"}));
       }
-      if(error){console.warn("pushScoutMatch falhou:",error.message);setSyncStatus("error","Scout salvo no aparelho, mas pendente no Supabase.");return false}
-      setSyncStatus("ok","Scout salvo no Supabase.");
-      return true;
+      if(error)console.warn("pushScoutMatch falhou:",error.message);
     }
     async function syncPushScoutPoint(p,m){
       if(!supabaseClient||!p||!m||!isDbId(p.id)||!isDbId(m.id)) return;
@@ -379,8 +365,7 @@
         is_tiebreak:p.is_tiebreak, is_super_tiebreak:p.is_super_tiebreak,
         score_label:p.score_after
       },{onConflict:"id"});
-      if(error){console.warn("pushScoutPoint falhou:",error.message);setSyncStatus("error","Ponto do Scout pendente de sincronização.");return false}
-      return true;
+      if(error)console.warn("pushScoutPoint falhou:",error.message);
     }
     async function syncPushScoutEvent(e,m){
       if(!supabaseClient||!e||!isDbId(e.id)) return;
@@ -395,8 +380,7 @@
         zone:e.zone||null, is_deciding_point:!!e.is_deciding_point,
         is_tiebreak:!!e.is_tiebreak, is_super_tiebreak:!!e.is_super_tiebreak
       },{onConflict:"id"});
-      if(error){console.warn("pushScoutEvent falhou:",error.message);setSyncStatus("error","Evento do Scout pendente de sincronização.");return false}
-      return true;
+      if(error)console.warn("pushScoutEvent falhou:",error.message);
     }
 
     // Push completo de todos os dados locais para o Supabase
@@ -405,19 +389,17 @@
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
       toast("Sincronizando dados...");
-      let ok=true;
-      for(const s of state.students) ok=(await syncPushStudent(s)!==false)&&ok;
-      for(const c of state.classes) ok=(await syncPushClass(c)!==false)&&ok;
-      for(const e of state.enroll) ok=(await syncPushEnrollment(e.class_id, e.student_id)!==false)&&ok;
-      for(const e of state.evals) ok=(await syncPushEval(e)!==false)&&ok;
-      for(const p of state.payments) ok=(await syncPushPayment(p)!==false)&&ok;
+      for(const s of state.students) await syncPushStudent(s);
+      for(const c of state.classes) await syncPushClass(c);
+      for(const e of state.enroll) await syncPushEnrollment(e.class_id, e.student_id);
+      for(const e of state.evals) await syncPushEval(e);
+      for(const p of state.payments) await syncPushPayment(p);
       if(state.match){
-        ok=(await syncPushScoutMatch(state.match)!==false)&&ok;
-        for(const p of state.match.points||[]) ok=(await syncPushScoutPoint(p,state.match)!==false)&&ok;
+        await syncPushScoutMatch(state.match);
+        for(const p of state.match.points||[]) await syncPushScoutPoint(p,state.match);
       }
-      for(const e of state.scout_events) ok=(await syncPushScoutEvent(e,state.match)!==false)&&ok;
-      if(ok){setSyncStatus("ok","Dados sincronizados com o Supabase.");toast("Dados sincronizados com sucesso!")}
-      else toast("Há dados pendentes. Verifique conexão e Supabase.");
+      for(const e of state.scout_events) await syncPushScoutEvent(e,state.match);
+      toast("Dados sincronizados com sucesso! ✅");
     }
     // ═══════════════════════════════════════════════════════════
     const fundamentals=["Saque","Devolução","Tapa","Bandeja","Smash","Forehand","Backhand","Lob","Gancho","Curta","Consistência","Posicionamento"];
@@ -448,24 +430,12 @@
       const executionLabel=TECHNICAL_EXECUTION_OPTIONS.find(([id])=>id===executionIssue)?.[1]||"";
       return{...rule,treeId,treeTitle:tree.title,context,decision,idealDecision:tree.ideal[context],executionLabel,executionFeedback:rule.ok&&executionLabel?`A decisão foi correta. Agora o foco é execução: ${executionLabel}.`:""};
     }
-    const uid=()=>Math.random().toString(36).slice(2,9),recordId=()=>supabaseClient&&crypto.randomUUID?crypto.randomUUID():uid(),iso=(d=today)=>d.toISOString().slice(0,10),money=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])),firstName=n=>String(n||"Aluno").trim().split(/\s+/)[0]||"Aluno";
-    const seed=()=>({session:false,mode:"login",page:"today",selected:null,reveal:null,blind:{},draftPoint:{},pedagogy:{treeId:"construction_finalization",context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:false},syncInfo:null,usageEvents:[],usageFlow:null,teacherEmail:"",teacherName:"",aiMaterials:"",aiLearnings:[],scoutClassId:"",students:[],classes:[],enroll:[],sessions:[],attendance:[],makeups:[],evals:[],payments:[],ops:[],scout_events:[],scoutHistory:[],match:null,plans:[],cycles:{}});
+    const uid=()=>Math.random().toString(36).slice(2,9),iso=(d=today)=>d.toISOString().slice(0,10),money=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])),firstName=n=>String(n||"Aluno").trim().split(/\s+/)[0]||"Aluno";
+    const seed=()=>({session:false,mode:"login",page:"today",selected:null,reveal:null,blind:{},draftPoint:{},pedagogy:{treeId:"construction_finalization",context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:false},teacherEmail:"",teacherName:"",aiMaterials:"",aiLearnings:[],scoutClassId:"",students:[],classes:[],enroll:[],sessions:[],attendance:[],makeups:[],evals:[],payments:[],ops:[],scout_events:[],scoutHistory:[],match:null,plans:[],cycles:{}});
     let state=load(),modalKind="class",editing=null;
-    function normalizeState(s){s.page=s.page||"today";s.aiMaterials=s.aiMaterials||"";s.aiLearnings=s.aiLearnings||[];s.scoutClassId=s.scoutClassId||"";s.syncInfo=s.syncInfo||null;s.usageEvents=s.usageEvents||[];s.usageFlow=s.usageFlow||null;s.pedagogy={treeId:"construction_finalization",context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:false,...(s.pedagogy||{})};s.students=s.students||[];s.classes=s.classes||[];s.enroll=s.enroll||[];s.evals=s.evals||[];s.payments=s.payments||[];s.ops=s.ops||[];s.scout_events=s.scout_events||[];s.scoutHistory=s.scoutHistory||[];s.makeups=s.makeups||[];s.cycles=s.cycles||{};s.sessions=(s.sessions||[]).map(x=>({confirmations:{},confirmationTokens:{},confirmationRemote:{},...x}));s.selected=s.selected&&s.students.some(x=>x.id===s.selected)?s.selected:s.students[0]?.id||null;return s}
+    function normalizeState(s){s.page=s.page||"today";s.aiMaterials=s.aiMaterials||"";s.aiLearnings=s.aiLearnings||[];s.scoutClassId=s.scoutClassId||"";s.pedagogy={treeId:"construction_finalization",context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:false,...(s.pedagogy||{})};s.students=s.students||[];s.classes=s.classes||[];s.enroll=s.enroll||[];s.evals=s.evals||[];s.payments=s.payments||[];s.ops=s.ops||[];s.scout_events=s.scout_events||[];s.scoutHistory=s.scoutHistory||[];s.makeups=s.makeups||[];s.cycles=s.cycles||{};s.sessions=(s.sessions||[]).map(x=>({confirmations:{},confirmationTokens:{},confirmationRemote:{},...x}));s.selected=s.selected&&s.students.some(x=>x.id===s.selected)?s.selected:s.students[0]?.id||null;return s}
     function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.students))return normalizeState(s)}catch{}const s=seed();localStorage.setItem(KEY,JSON.stringify(s));return s}
-    function save(){localStorage.setItem(KEY,JSON.stringify(state));if(state.teacherEmail)localStorage.setItem(ACCOUNT_PREFIX+state.teacherEmail.toLowerCase(),JSON.stringify({...state,session:false}))}function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2400)}
-    function setSyncStatus(kind,text){state.syncInfo={kind,text,at:new Date().toISOString()};save();renderSyncBanner()}
-    function renderSyncBanner(){const el=document.getElementById("syncBanner");if(!el)return;const info=state.syncInfo;if(!info||info.kind==="ok"){el.classList.add("hidden");return}el.classList.remove("hidden");el.innerHTML=`<div class="row"><div><strong>Sincronização pendente</strong><p class="muted" style="line-height:1.4;margin:.3rem 0 0">${esc(info.text)}</p></div><button type="button" class="btn outline" id="retrySync">Tentar</button></div>`;document.getElementById("retrySync").onclick=async()=>{await syncPushAll();render()}}
-    async function trackUsage(eventName,properties={},durationMs=null,touchCount=null){
-      const row={id:recordId(),event_name:eventName,properties,session_key:state.teacherEmail||"anonymous",duration_ms:durationMs,touch_count:touchCount,created_at:new Date().toISOString()};
-      state.usageEvents=[row,...state.usageEvents].slice(0,250);save();
-      if(!supabaseClient||!state.session)return row;
-      const {data:{user}}=await supabaseClient.auth.getUser();
-      if(!user)return row;
-      const {error}=await supabaseClient.from("usage_events").insert({...row,teacher_id:user.id});
-      if(error&&error.code!=="42P01")console.warn("usage_event falhou:",error.message);
-      return row;
-    }
+    function save(){localStorage.setItem(KEY,JSON.stringify(state));if(state.teacherEmail)localStorage.setItem(ACCOUNT_PREFIX+state.teacherEmail.toLowerCase(),JSON.stringify({...state,session:false}))}function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),1900)}
     function loadAccount(email){try{const s=JSON.parse(localStorage.getItem(ACCOUNT_PREFIX+email.toLowerCase()));if(s&&Array.isArray(s.students))return normalizeState({...s,session:true,teacherEmail:email.toLowerCase()})}catch{}return null}
     function newAccount(email,name=""){return normalizeState({...seed(),session:true,teacherEmail:email.toLowerCase(),teacherName:name||email.split("@")[0]})}
     const student=id=>state.students.find(x=>x.id===id),klass=id=>state.classes.find(x=>x.id===id),studentsFor=cid=>state.enroll.filter(e=>e.class_id===cid).map(e=>student(e.student_id)).filter(Boolean),todayClasses=()=>state.classes.filter(c=>+c.weekday===weekday).sort((a,b)=>a.start.localeCompare(b.start));
@@ -478,7 +448,7 @@
       return todayRows.concat(morningRows);
     }
     function phone(p){const d=String(p||"").replace(/\D/g,"");return d?d.startsWith("55")?d:"55"+d:""}function openZap(text,p=""){const n=phone(p),url=n?`https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(text)}`:`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;toast(n?"Abrindo WhatsApp do aluno.":"Abrindo WhatsApp.");if(matchMedia("(max-width: 760px)").matches||/iPhone|iPad|Android/i.test(navigator.userAgent)){location.href=url;return}window.open(url,"_blank","noopener")}
-    function session(cid,date=iso()){let s=state.sessions.find(x=>x.class_id===cid&&x.date===date);if(!s){const c=klass(cid);s={id:recordId(),class_id:cid,date,start:c?.start||"00:00",focus:c?.focus||"",plan:null,confirmations:{},confirmationTokens:{},confirmationRemote:{}};state.sessions.push(s);save()}s.confirmations=s.confirmations||{};s.confirmationTokens=s.confirmationTokens||{};s.confirmationRemote=s.confirmationRemote||{};return s}
+    function session(cid,date=iso()){let s=state.sessions.find(x=>x.class_id===cid&&x.date===date);if(!s){const c=klass(cid);s={id:uid(),class_id:cid,date,start:c?.start||"00:00",focus:c?.focus||"",plan:null,confirmations:{},confirmationTokens:{},confirmationRemote:{}};state.sessions.push(s);save()}s.confirmations=s.confirmations||{};s.confirmationTokens=s.confirmationTokens||{};s.confirmationRemote=s.confirmationRemote||{};return s}
     function confirmationToken(cid,sid,date=iso()){const s=session(cid,date);if(!s.confirmationTokens[sid]){s.confirmationTokens[sid]=`${uid()}${uid()}${Date.now().toString(36)}`;save()}return s.confirmationTokens[sid]}
     function confirmationPageUrl(token){
       const basePath=location.pathname.replace(/[^/]*$/, "");
@@ -630,34 +600,19 @@
       }
     }
     function selfAssessToken(sid){if(!state.selfAssessTokens)state.selfAssessTokens={};if(!state.selfAssessTokens[sid]){state.selfAssessTokens[sid]=`sa${uid()}${uid()}${Date.now().toString(36)}`;save()}return state.selfAssessTokens[sid]}
-    function selfAssessLink(sid,token=selfAssessToken(sid)){const st=student(sid),base=location.origin+location.pathname,name=encodeURIComponent(st?.name||"Aluno"),level=encodeURIComponent(st?.level||"intermediario");return base+"?bf_self="+token+"&bf_student="+name+"&bf_level="+level}
-    function selfAssessMessage(sid,link){const st=student(sid);return"Oi, "+firstName(st?.name)+"! 🎾\n\nQuero entender como você se sente em cada fundamento do beach tennis para personalizar os seus treinos.\n\nEssa autoavaliação leva 2 minutos e vai guiar tudo que vamos trabalhar juntos a partir de agora — drills, foco técnico e evolução no radar.\n\nToque no link abaixo:\n"+link}
-    async function prepareSelfAssessMessage(sid){
-      const st=student(sid);
-      if(!st)throw new Error("Não encontrei o aluno selecionado.");
-      const token=selfAssessToken(sid),link=selfAssessLink(sid,token);
-      if(supabaseClient){
-        const {data:{user}}=await supabaseClient.auth.getUser();
-        if(!user)throw new Error("Entre novamente na conta antes de enviar autoavaliações.");
-        const syncedStudentId=await syncPushStudent(st);
-        if(!syncedStudentId){
-          const cause=String(syncPushStudent.lastError||"");
-          if(/uuid|invalid input syntax/i.test(cause))throw new Error("Este aluno tem um cadastro antigo incompatível com a sincronização. Será necessário atualizar o cadastro antes de enviar o link.");
-          throw new Error("Não consegui sincronizar os dados deste aluno. Toque em Tentar sincronizar e envie o link novamente.");
-        }
-        const {error}=await supabaseClient.rpc("register_self_assess_token",{p_student_id:sid,p_token:token,p_teacher_id:user.id});
-        if(error){
-          const cause=String(error.message||"");
-          console.warn("register_self_assess_token falhou:",cause);
-          if(/Aluno nao pertence|Aluno não pertence/i.test(cause))throw new Error("Este aluno não está vinculado à sua conta no Supabase. Sincronize os alunos e tente novamente.");
-          if(/register_self_assess_token|schema cache|function/i.test(cause))throw new Error("A função de autoavaliação ainda não está disponível no Supabase. Execute a migração de persistência e tente novamente.");
-          throw new Error(`Não consegui registrar o link: ${cause||"erro no Supabase"}.`);
-        }
-        setSyncStatus("ok","Link de autoavaliação salvo no Supabase.");
-      }
-      await trackUsage("self_assessment_link_ready",{student_id:sid});
-      return selfAssessMessage(sid,link);
-    }
+    function selfAssessLink(sid){const st=student(sid);const base=location.origin+location.pathname;const token=selfAssessToken(sid);const name=encodeURIComponent(st?.name||"Aluno");const level=encodeURIComponent(st?.level||"intermediario");
+  // Registra o token no Supabase para que o aluno possa salvar sem login
+  const cfg=window.BEACHFLOW_SUPABASE||{};
+  const teacherId=state.teacherId||null;
+  if(cfg.url&&cfg.anonKey&&teacherId){
+    fetch(`${cfg.url}/rest/v1/rpc/register_self_assess_token`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","apikey":cfg.anonKey,"Authorization":`Bearer ${state.accessToken||cfg.anonKey}`},
+      body:JSON.stringify({p_student_id:sid,p_token:token,p_teacher_id:teacherId})
+    }).catch(e=>console.warn("register_self_assess_token erro:",e));
+  }
+  return base+"?bf_self="+token+"&bf_student="+name+"&bf_level="+level}
+    function selfAssessMessage(sid){const st=student(sid),link=selfAssessLink(sid);return"Oi, "+firstName(st?.name)+"! 🎾\n\nQuero entender como você se sente em cada fundamento do beach tennis para personalizar os seus treinos.\n\nEssa autoavaliação leva 2 minutos e vai guiar tudo que vamos trabalhar juntos a partir de agora — drills, foco técnico e evolução no radar.\n\nToque no link abaixo:\n"+link}
     function renderSelfAssessScreen(){
       // WhatsApp às vezes encoda & como %26 — normaliza antes de parsear
       const rawSearch=decodeURIComponent(location.search).replace(/%26/gi,"&");
@@ -673,16 +628,14 @@
       fundamentals.forEach(f=>saScores[f]="6.5");
       function renderSAForm(done=false){
         if(done){selfAssessForm.innerHTML=`<div class="callout" style="text-align:center"><span style="font-size:2.5rem">🎾</span><h2 class="display" style="font-size:1.35rem;margin:.5rem 0">Avaliação enviada!</h2><p class="muted" style="line-height:1.5">Obrigado, ${esc(studentName)}! Seu professor já recebeu os dados e vai usar isso para personalizar os próximos treinos.</p></div>`;return}
-        selfAssessForm.innerHTML=`${fundamentals.map(f=>`<div class="card pad" style="display:grid;gap:.6rem"><div class="row"><strong>${esc(f)}</strong><span class="badge cyan" id="saBadge-${esc(f)}">${esc(evalLabels[saScores[f]]||"Ok")} · ${saScores[f]}</span></div><p class="muted" style="margin:0;line-height:1.35;font-size:.76rem">${(evalCriteria[f]||[]).map(esc).join(" · ")}</p><div class="grid2">${evalScale.map(v=>`<button class="choice ${saScores[f]===v?"sel":""}" type="button" data-sa-fund="${esc(f)}" data-sa-score="${v}">${esc(evalLabels[v])}<br><span class="muted" style="font-size:.68rem;font-weight:700">${esc((evalRubric[f]||{})[v]||"")}</span></button>`).join("")}</div></div>`).join("")}<div id="selfAssessError" class="callout hidden" style="border:1px solid color-mix(in oklch,var(--danger) 48%,transparent);color:var(--fg);line-height:1.45"></div><button id="submitSelfAssess" class="btn primary" style="margin-top:.5rem">Enviar avaliação</button>`;
+        selfAssessForm.innerHTML=`${fundamentals.map(f=>`<div class="card pad" style="display:grid;gap:.6rem"><div class="row"><strong>${esc(f)}</strong><span class="badge cyan" id="saBadge-${esc(f)}">${esc(evalLabels[saScores[f]]||"Ok")} · ${saScores[f]}</span></div><p class="muted" style="margin:0;line-height:1.35;font-size:.76rem">${(evalCriteria[f]||[]).map(esc).join(" · ")}</p><div class="grid2">${evalScale.map(v=>`<button class="choice ${saScores[f]===v?"sel":""}" type="button" data-sa-fund="${esc(f)}" data-sa-score="${v}">${esc(evalLabels[v])}<br><span class="muted" style="font-size:.68rem;font-weight:700">${esc((evalRubric[f]||{})[v]||"")}</span></button>`).join("")}</div></div>`).join("")}<button id="submitSelfAssess" class="btn primary" style="margin-top:.5rem">Enviar avaliação</button>`;
         selfAssessForm.querySelectorAll("[data-sa-score]").forEach(b=>b.onclick=()=>{saScores[b.dataset.saFund]=b.dataset.saScore;const badge=document.getElementById("saBadge-"+b.dataset.saFund);if(badge)badge.textContent=`${evalLabels[b.dataset.saScore]||"Ok"} · ${b.dataset.saScore}`;selfAssessForm.querySelectorAll(`[data-sa-fund="${b.dataset.saFund}"]`).forEach(x=>x.classList.toggle("sel",x.dataset.saScore===b.dataset.saScore))});
         document.getElementById("submitSelfAssess").onclick=async()=>{
           const btn=document.getElementById("submitSelfAssess");
-          const errorBox=document.getElementById("selfAssessError");
-          if(errorBox){errorBox.textContent="";errorBox.classList.add("hidden")}
           btn.textContent="Enviando...";btn.disabled=true;
           const cfg=window.BEACHFLOW_SUPABASE||{};
           // Busca teacher_id e student_id pelo token via Supabase
-          let saved=false,saveError="";
+          let saved=false;
           if(cfg.url&&cfg.anonKey){
             try{
               // Chama RPC anon para salvar autoavaliação
@@ -692,29 +645,12 @@
                 body:JSON.stringify({p_token:token,p_scores:saScores})
               });
               if(res.ok)saved=true;
-              else{
-                const failure=await res.json().catch(()=>({}));
-                const message=String(failure.message||"");
-                console.warn("save_self_assessment falhou:",message||failure);
-                if(/invalido|inválido|nao encontrada|não encontrada/i.test(message))saveError="Este link de autoavaliação não é mais válido. Solicite um novo link ao professor.";
-                else if(/ja foi enviada|já foi enviada|utilizad/i.test(message))saveError="Esta autoavaliação já foi enviada. Para responder novamente, solicite um novo link ao professor.";
-                else saveError="Não foi possível salvar sua avaliação agora. Tente novamente em alguns instantes.";
-              }
-            }catch(e){
-              console.warn("save_self_assessment erro:",e);
-              saveError="Sem comunicação com o servidor. Verifique sua internet e tente novamente.";
-            }
-          }
-          if(cfg.url&&cfg.anonKey&&!saved){
-            btn.textContent="Tentar enviar novamente";btn.disabled=false;
-            if(errorBox){errorBox.textContent=saveError;errorBox.classList.remove("hidden")}
-            toast(saveError);
-            return;
+            }catch(e){console.warn("save_self_assessment erro:",e)}
           }
           // Salva localmente também como fallback
           const sid=Object.keys(state.selfAssessTokens||{}).find(k=>state.selfAssessTokens[k]===token);
           if(sid){
-            fundamentals.forEach(f=>{state.evals.push({id:recordId(),student_id:sid,evaluator:"student_blind",fundamental:f,score:+saScores[f]})});
+            fundamentals.forEach(f=>{state.evals.push({id:uid(),student_id:sid,evaluator:"student_blind",fundamental:f,score:+saScores[f]})});
             state.reveal=sid;save();
           }
           renderSAForm(true);
@@ -1434,7 +1370,7 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
       const progressionCriterion=prematureFinish?"Avançar quando a dupla cria a bola verde antes de definir e mantém cobertura após a tentativa de finalização.":f==="Saque"&&!pressureRecovery?"Avançar quando a dupla direciona o saque com controle, reconhece a devolução gerada e executa a terceira bola sem perder cobertura.":"Avançar quando a dupla reconhece a situação correta, executa com margem e recupera cobertura depois da ação.";
       const regressionCriterion=prematureFinish?"Se a turma continua buscando winner em Zona Amarela, retirar a finalização e pontuar apenas construção com margem até a bola verde aparecer.":f==="Saque"&&!pressureRecovery?"Se o saque perde controle ou a dupla não lê a devolução, manter um único alvo amplo e treinar saque + terceira bola de construção antes de variar.":"Se a escolha ainda quebrar sob pressão, reduzir velocidade e voltar à construção/neutralização antes de acelerar.";
       const validationCriterion=prematureFinish?"No Scout final, comparar tentativas de finalização em Zona Amarela com definições precedidas de construção ou pressão em Zona Verde.":f==="Saque"&&!pressureRecovery?"No Scout final, observar direção do saque, qualidade da devolução recebida e decisão da terceira bola; ace isolado não confirma evolução do ciclo.":"Realizar scout curto na última semana. Observar contexto da escolha, transição tática e recuperação, sem mudar o ciclo no meio da aplicação.";
-      return{id:recordId(),class_id:classId,duration:weeks,current_week:1,theme:theme.title,status:theme.status,status_note:theme.note,focus:f,score:ctx?.nota_media_radar||"--",source:ctx?.fonte_radar||"radar disponível",ctx,weeks:selected,progressionCriterion,regressionCriterion,validationCriterion,lesson:plan({focus:f,level:ctx?.nivel||"intermediario",aiContext:ctx}),markdown:"",created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+      return{id:uid(),class_id:classId,duration:weeks,current_week:1,theme:theme.title,status:theme.status,status_note:theme.note,focus:f,score:ctx?.nota_media_radar||"--",source:ctx?.fonte_radar||"radar disponível",ctx,weeks:selected,progressionCriterion,regressionCriterion,validationCriterion,lesson:plan({focus:f,level:ctx?.nivel||"intermediario",aiContext:ctx}),markdown:"",created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
     }
     function cycleLesson(cycle){return cycle.lesson||plan({focus:cycle.focus||"Consistência",level:cycle.ctx?.nivel||"intermediario",aiContext:cycle.ctx||{}})}
     function cycleMarkdown(cycle){
@@ -1469,7 +1405,7 @@ ${markdownPlan(pl,ctx).replace(/^# PLANO DE TREINAMENTO:[^\n]*\n/,"")}`;
       const {data:{user}}=await supabaseClient.auth.getUser();
       if(!user)return;
       const ctx=cycle.ctx||{},hash=String(Math.abs(`${cycle.theme}|${cycle.duration}|${cycle.updated_at}`.split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)));
-      const {error}=await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar||cycle.focus,level:ctx.nivel||"",prompt_hash:hash,payload_json:{type:"cycle",cycle:{...cycle,markdown}},knowledge_version:PLAN_TEMPLATE_VERSION});
+      const {error}=await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar||cycle.focus,level:ctx.nivel||"",prompt_hash:hash,payload_json:{type:"cycle",cycle:{...cycle,markdown}},knowledge_version:"cycle-contextual-v1"});
       if(error)console.warn("Não foi possível sincronizar o ciclo:",error.message);
     }
     function physicalScript(f,techLevel,ctx){
@@ -1779,7 +1715,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
 * **Perguntas:**
 
 ### 7. Sumário para o WhatsApp do Grupo da Turma`;}
-    async function saveAiDrill(classId,ctx,markdown,cycle=null){if(!supabaseClient)return;const {data:{user}}=await supabaseClient.auth.getUser();if(!user)return;const hash=String(Math.abs(promptTreinoIA(ctx).split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)));await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar,level:ctx.nivel,prompt_hash:hash,payload_json:{contexto:ctx,markdown,cycle},knowledge_version:cycle?PLAN_TEMPLATE_VERSION:"manual-ciclo1-ciclo3-v2"})}
+    async function saveAiDrill(classId,ctx,markdown,cycle=null){if(!supabaseClient)return;const {data:{user}}=await supabaseClient.auth.getUser();if(!user)return;const hash=String(Math.abs(promptTreinoIA(ctx).split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)));await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar,level:ctx.nivel,prompt_hash:hash,payload_json:{contexto:ctx,markdown,cycle},knowledge_version:cycle?"cycle-contextual-v1":"manual-ciclo1-ciclo3-v2"})}
     async function savePlanLearning(classId,ctx,originalMarkdown,editedMarkdown){
       const summary=learningSummary(editedMarkdown);
       state.aiLearnings=state.aiLearnings||[];
@@ -1839,7 +1775,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     }
     function radarSvg(vals,extra){const cx=180,cy=170,R=112,pt=(v,i,r=R)=>{const a=-Math.PI/2+Math.PI*2*i/fundamentals.length;return[cx+Math.cos(a)*r*(v/10),cy+Math.sin(a)*r*(v/10)]},poly=(sc,color,fill,dash="")=>`<polygon points="${fundamentals.map((f,i)=>pt(sc[f]||0,i).join(",")).join(" ")}" fill="${fill}" stroke="${color}" stroke-width="2.5" ${dash}></polygon>`;return`<svg viewBox="0 0 360 330">${[2,4,6,8,10].map(l=>`<polygon points="${fundamentals.map((_,i)=>pt(l,i).join(",")).join(" ")}" fill="none" stroke="rgba(255,255,255,.08)"/>`).join("")}${fundamentals.map((f,i)=>{const p=pt(10,i),lp=pt(10,i,140);return`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="rgba(255,255,255,.1)"/><text x="${lp[0]}" y="${lp[1]}" text-anchor="middle" dominant-baseline="middle" fill="rgba(229,239,246,.74)" font-size="10" font-weight="800">${f}</text>`}).join("")}${poly(vals,"oklch(0.86 0.22 145)","rgba(83,246,101,.18)")}${extra?poly(extra,"oklch(0.78 0.18 220)","rgba(64,195,255,.12)",'stroke-dasharray="7 6"'):""}</svg>`}
     function render(){if(renderSelfAssessScreen())return;if(renderConfirmationLink())return;selfAssessScreen.classList.add("hidden");confirmScreen.classList.add("hidden");document.getElementById("login").classList.toggle("hidden",state.session);document.getElementById("app").classList.toggle("hidden",!state.session);document.getElementById("nav").classList.toggle("hidden",!state.session);if(!state.session)return;["today","students","classes","scout","finance"].forEach(p=>document.getElementById("page"+p[0].toUpperCase()+p.slice(1)).classList.toggle("hidden",state.page!==p));document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.getElementById("todayLabel").textContent=today.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"short"});renderToday();renderStudents();renderClasses();renderScout();renderFinance();wireCreates()}
-    function renderToday(){const cls=todayClasses(),cap=cls.reduce((s,c)=>s+ +c.capacity,0),fill=cls.reduce((s,c)=>s+studentsFor(c.id).length,0);stClasses.textContent=cls.length;stStudents.textContent=state.students.length;stOcc.textContent=cap?Math.round(fill/cap*100)+"%":"0%";renderSyncBanner();agenda.innerHTML=cls.length?cls.map(classCard).join(""):`<div class="empty">Nenhuma turma hoje.</div>`;agenda.querySelectorAll("[data-class]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-edit]"))return;openClass(c.dataset.class)});ops.innerHTML=state.ops.filter(o=>!o.resolved).map(o=>`<button class="item card" data-op="${o.id}" style="grid-template-columns:1fr auto"><div><span class="badge ${o.kind==="waitlist"?"warn":"cyan"}">${esc(o.kind)}</span><p style="margin:.45rem 0 0;font-weight:850;text-align:left">${esc(o.text)}</p>${o.kind==="waitlist"?'<p class="muted" style="margin:.25rem 0 0;font-size:.76rem;text-align:left">Toque para chamar reposição</p>':""}</div><span class="menu">×</span></button>`).join("")||`<div class="empty">Nenhuma ação pendente.</div>`;ops.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>{const o=state.ops.find(x=>x.id===b.dataset.op);if(o.kind==="waitlist")return openReplacement(o);o.resolved=true;save();render()})}
+    function renderToday(){const cls=todayClasses(),cap=cls.reduce((s,c)=>s+ +c.capacity,0),fill=cls.reduce((s,c)=>s+studentsFor(c.id).length,0);stClasses.textContent=cls.length;stStudents.textContent=state.students.length;stOcc.textContent=cap?Math.round(fill/cap*100)+"%":"0%";agenda.innerHTML=cls.length?cls.map(classCard).join(""):`<div class="empty">Nenhuma turma hoje.</div>`;agenda.querySelectorAll("[data-class]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-edit]"))return;openClass(c.dataset.class)});ops.innerHTML=state.ops.filter(o=>!o.resolved).map(o=>`<button class="item card" data-op="${o.id}" style="grid-template-columns:1fr auto"><div><span class="badge ${o.kind==="waitlist"?"warn":"cyan"}">${esc(o.kind)}</span><p style="margin:.45rem 0 0;font-weight:850;text-align:left">${esc(o.text)}</p>${o.kind==="waitlist"?'<p class="muted" style="margin:.25rem 0 0;font-size:.76rem;text-align:left">Toque para chamar reposição</p>':""}</div><span class="menu">×</span></button>`).join("")||`<div class="empty">Nenhuma ação pendente.</div>`;ops.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>{const o=state.ops.find(x=>x.id===b.dataset.op);if(o.kind==="waitlist")return openReplacement(o);o.resolved=true;save();render()})}
     function classCard(c){const f=studentsFor(c.id).length;return`<article class="class-card card" data-class="${c.id}"><div><strong class="time">${esc(c.start)}</strong><p class="muted" style="margin:.2rem 0 0;font-size:.72rem;font-weight:850">${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][c.weekday]}</p></div><div><strong>${esc(c.name)}</strong><div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem">${c.focus?`<span class="badge">⌖ ${esc(c.focus)}</span>`:""}<span class="badge cyan">${esc(c.level)}</span></div></div><div style="display:grid;justify-items:end;gap:.35rem"><span class="badge ${f>=c.capacity?"":"warn"}">${f}/${c.capacity}</span><button class="menu" data-edit="${c.id}">...</button></div></article>`}
     function hasTeacherRadar(ids){return state.evals.some(e=>(e.evaluator==="teacher"||e.evaluator==="student_blind")&&ids.includes(e.student_id))}
     function studentScoutPlanContext(sid,focus){
@@ -1870,7 +1806,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       sendScoutReport.onclick=()=>openZap(report.message,st?.phone);
       copyScoutReport.onclick=()=>navigator.clipboard?.writeText(report.message).then(()=>toast("Relatório copiado."));
     }
-    function renderStudents(){profileSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)} · ${esc(s.level)}</option>`).join("");blindSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)}</option>`).join("");const s=student(state.selected)||state.students[0];if(!s){profile.innerHTML=`<div class="empty">Nenhum aluno cadastrado ainda. Use o botão + Aluno para começar com seus próprios dados.</div>`;blindSliders.innerHTML="";reveal.classList.add("hidden");return}const sc=studentRadarScores(s.id),w=weak(sc),st=strong(sc),due=state.payments.filter(p=>p.student_id===s.id&&p.status!=="pago"),atts=state.attendance.filter(a=>a.student_id===s.id),pres=atts.filter(a=>a.present).length,abs=atts.filter(a=>!a.present).length,ss=scoutSummary(s.id),scoutPlanContext=studentScoutPlanContext(s.id,w),pl=plan({student:s,focus:w,aiContext:scoutPlanContext}),hasTeacher=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="teacher"),hasBlind=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="student_blind"),hasContextualScout=state.scout_events.some(e=>e.student_id===s.id&&e.inferred_intention),canReport=hasBlind&&hasContextualScout,technicalLabel=hasTeacher?"Avaliação técnica do professor":hasBlind?"Hipótese técnica pela autoavaliação":"Referência técnica sem nota",planLabel=scoutPlanContext?"Plano orientado pelo Scout validado":"Plano a validar em quadra";profile.innerHTML=`<div class="stats"><article class="card stat"><span>⌖</span><strong class="text-glow">${esc(w)}</strong><p>Foco técnico</p></article><article class="card stat"><span>↗</span><strong>${esc(st)}</strong><p>Ponto percebido</p></article><article class="card stat"><span>$</span><strong>${due.length}</strong><p>Pendências</p></article></div><div class="callout"><strong>${esc(s.name)}</strong><p class="muted" style="line-height:1.45">${esc(s.level)} · ${esc(s.phone||"sem WhatsApp")} · ${pres} presença(s), ${abs} falta(s) · ${ss.total} ação(ões) no Scout</p></div><div class="radar">${Object.values(sc).some(Boolean)?radarSvg(sc):'<div class="empty">Sem avaliação técnica.</div>'}</div>${studentEvaluationHtml(s.id)}${studentBehaviorHtml(s.id)}<div class="callout"><p class="eyebrow" style="color:var(--primary)">${esc(planLabel)}</p><p class="muted" style="line-height:1.45;margin:.4rem 0"><strong>${esc(technicalLabel)}:</strong> ${esc(w)} (${scoreText(displayScore(s.id,w).score)}/10).</p><h3 class="display" style="font-size:1rem;margin-top:.4rem">${esc(pl.title)}</h3><p class="muted" style="line-height:1.45">${esc(pl.why)}${scoutPlanContext?" O problema confirmado no jogo tem prioridade; o gap técnico permanece visível como hipótese paralela.":" O Ciclo IA da turma cruza esta base com a evidência de jogo do Scout."}</p></div><div class="form"><button class="btn primary" id="studentReport" ${canReport?"":"disabled"}>Relatório para o aluno</button>${canReport?"":`<p class="muted" style="font-size:.76rem;line-height:1.4;margin:0">O relatório será liberado quando houver autoavaliação e ações individuais no Scout.</p>`}<button class="btn outline" id="openStudentScout">Abrir Scout comportamental</button><button class="btn outline" id="zapPlan">Enviar plano no WhatsApp</button><button class="btn outline" data-create="eval" data-id="${s.id}">Avaliar aluno</button><button class="btn outline" id="editStudentBtn">Editar dados</button>${hasTeacher?`<button class="btn danger" id="deleteTeacherEval">Excluir avaliação professor</button>`:""}${hasBlind?`<button class="btn ghost" id="deleteBlindEval">Excluir autoavaliação</button>`:""}</div>`;const studentReportBtn=document.getElementById("studentReport");if(canReport)studentReportBtn.onclick=()=>openStudentScoutReport(s.id);document.getElementById("zapPlan").onclick=()=>openZap(pl.msg,s.phone);document.getElementById("openStudentScout").onclick=()=>{state.page="scout";save();render();toast("O Scout mostra comportamento sem alterar a nota técnica.")};document.getElementById("editStudentBtn").onclick=()=>openCreate("student",s.id);const delTeacher=document.getElementById("deleteTeacherEval"),delBlind=document.getElementById("deleteBlindEval");if(delTeacher)delTeacher.onclick=()=>deleteStudentEvaluations(s.id,"teacher");if(delBlind)delBlind.onclick=()=>deleteStudentEvaluations(s.id,"student_blind");wireCreates();renderBlind()}
+    function renderStudents(){profileSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)} · ${esc(s.level)}</option>`).join("");blindSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)}</option>`).join("");const s=student(state.selected)||state.students[0];if(!s){profile.innerHTML=`<div class="empty">Nenhum aluno cadastrado ainda. Use o botão + Aluno para começar com seus próprios dados.</div>`;blindSliders.innerHTML="";reveal.classList.add("hidden");return}const sc=studentRadarScores(s.id),w=weak(sc),st=strong(sc),due=state.payments.filter(p=>p.student_id===s.id&&p.status!=="pago"),atts=state.attendance.filter(a=>a.student_id===s.id),pres=atts.filter(a=>a.present).length,abs=atts.filter(a=>!a.present).length,ss=scoutSummary(s.id),scoutPlanContext=studentScoutPlanContext(s.id,w),pl=plan({student:s,focus:w,aiContext:scoutPlanContext}),hasTeacher=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="teacher"),hasBlind=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="student_blind"),hasContextualScout=state.scout_events.some(e=>e.student_id===s.id&&e.inferred_intention),canReport=hasBlind&&hasContextualScout,technicalLabel=hasTeacher?"Avaliação técnica do professor":hasBlind?"Hipótese técnica pela autoavaliação":"Referência técnica sem nota",planLabel=scoutPlanContext?"Plano orientado pelo Scout validado":"Plano a validar em quadra";profile.innerHTML=`<div class="stats"><article class="card stat"><span>⌖</span><strong class="text-glow">${esc(w)}</strong><p>Foco técnico</p></article><article class="card stat"><span>↗</span><strong>${esc(st)}</strong><p>Ponto percebido</p></article><article class="card stat"><span>$</span><strong>${due.length}</strong><p>Pendências</p></article></div><div class="callout"><strong>${esc(s.name)}</strong><p class="muted" style="line-height:1.45">${esc(s.level)} · ${esc(s.phone||"sem WhatsApp")} · ${pres} presença(s), ${abs} falta(s) · ${ss.total} ação(ões) no Scout</p></div><div class="radar">${Object.values(sc).some(Boolean)?radarSvg(sc):'<div class="empty">Sem avaliação técnica.</div>'}</div>${studentEvaluationHtml(s.id)}${studentBehaviorHtml(s.id)}<div class="callout"><p class="eyebrow" style="color:var(--primary)">${esc(planLabel)}</p><p class="muted" style="line-height:1.45;margin:.4rem 0"><strong>${esc(technicalLabel)}:</strong> ${esc(w)} (${scoreText(displayScore(s.id,w).score)}/10).</p><h3 class="display" style="font-size:1rem;margin-top:.4rem">${esc(pl.title)}</h3><p class="muted" style="line-height:1.45">${esc(pl.why)}${scoutPlanContext?" O problema confirmado no jogo tem prioridade; o gap técnico permanece visível como hipótese paralela.":" O Ciclo IA da turma cruza esta base com a evidência de jogo do Scout."}</p></div><div class="form"><button class="btn primary" id="studentReport" ${canReport?"":"disabled"}>Relatório para o aluno</button>${canReport?"":`<p class="muted" style="font-size:.76rem;line-height:1.4;margin:0">O relatório será liberado quando houver autoavaliação e ações individuais no Scout.</p>`}<button class="btn outline" id="openStudentScout">Abrir Scout comportamental</button><button class="btn outline" id="zapPlan">Enviar plano no WhatsApp</button><button class="btn outline" data-create="eval" data-id="${s.id}">Avaliar aluno</button><button class="btn outline" id="editStudentBtn">Editar dados</button>${hasTeacher?`<button class="btn danger" id="deleteTeacherEval">Excluir avaliação professor</button>`:""}${hasBlind?`<button class="btn ghost" id="deleteBlindEval">Excluir autoavaliação</button>`:""}</div>`;const studentReportBtn=document.getElementById("studentReport");if(canReport)studentReportBtn.onclick=()=>openStudentScoutReport(s.id);document.getElementById("zapPlan").onclick=()=>openZap(pl.msg,s.phone);document.getElementById("openStudentScout").onclick=()=>{state.page="scout";save();render();toast("O Scout mostra comportamento sem alterar a nota técnica.")};document.getElementById("editStudentBtn").onclick=()=>openCreate("student",s.id);const delTeacher=document.getElementById("deleteTeacherEval"),delBlind=document.getElementById("deleteBlindEval");if(delTeacher)delTeacher.onclick=()=>deleteStudentEvaluations(s.id,"teacher");if(delBlind)delBlind.onclick=()=>deleteStudentEvaluations(s.id,"student_blind");const zapSA=document.getElementById("zapSelfAssess");if(zapSA)zapSA.onclick=()=>openZap(selfAssessMessage(s.id),s.phone);wireCreates();renderBlind()}
     function renderBlind(){
   const sid=blindSelect.value||state.selected||state.students[0]?.id;
   const st=student(sid);
@@ -1904,7 +1840,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       <button class="btn ghost" id="resendSelfAssess">Reenviar link de autoavaliação</button>`;
     reveal.classList.add("hidden");
     const resendBtn=document.getElementById("resendSelfAssess");
-    if(resendBtn&&st)resendBtn.onclick=async()=>{try{openZap(await prepareSelfAssessMessage(sid),st.phone)}catch(err){toast(err.message)}};
+    if(resendBtn&&st)resendBtn.onclick=()=>openZap(selfAssessMessage(sid),st.phone);
   } else {
     // Aluno ainda não respondeu — tenta sincronizar do Supabase primeiro
     if(badge){badge.textContent="Aguardando resposta";badge.className="badge warn"}
@@ -1917,7 +1853,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       </div>`;
     reveal.classList.add("hidden");
     const sendBtn=document.getElementById("sendSelfAssessBtn");
-    if(sendBtn&&st)sendBtn.onclick=async()=>{try{openZap(await prepareSelfAssessMessage(sid),st.phone)}catch(err){toast(err.message)}};
+    if(sendBtn&&st)sendBtn.onclick=()=>openZap(selfAssessMessage(sid),st.phone);
   }
 }
     function renderClasses(){classes.innerHTML=state.classes.sort((a,b)=>a.weekday-b.weekday||a.start.localeCompare(b.start)).map(classCard).join("")||`<div class="empty">Nenhuma turma cadastrada. Crie uma turma para começar.</div>`;classes.querySelectorAll("[data-class]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-edit]"))return;openClass(c.dataset.class)});const ids=state.students.map(s=>s.id),av=avg(ids),hasRadar=hasTeacherRadar(ids);radar.innerHTML=hasRadar&&Object.values(av).some(Boolean)?radarSvg(av):`<div class="empty">Faça uma avaliação técnica ou receba uma autoavaliação para liberar o radar.</div>`;if(!state.students.length||!hasRadar){ai.innerHTML=`<p class="eyebrow" style="color:var(--primary)">Ciclo IA</p><div class="empty">A IA ainda não tem dados reais desta conta. Cadastre alunos e salve uma avaliação ou autoavaliação para gerar um ciclo a partir do radar.</div>`;return}const wk=weak(av),theme=cycleTheme({fundamento_app:wk,scout_validado:false});ai.innerHTML=`<p class="eyebrow" style="color:var(--primary)">Hipótese do próximo ciclo</p><h2 class="display" style="font-size:1.25rem;margin-top:.45rem">${esc(theme.title)}</h2><div class="callout"><span class="badge">⌖ ${esc(wk)}</span><p style="line-height:1.45;font-weight:850">${esc(theme.note)}</p><p class="muted" style="line-height:1.45;margin:.5rem 0 0">Abra uma turma para escolher a duração, gerar as aulas do ciclo e definir o Scout de validação.</p></div><button class="btn primary" id="applyFocus" style="width:100%;margin-top:.75rem">Aplicar referência às turmas de hoje</button>`;document.getElementById("applyFocus").onclick=()=>{todayClasses().forEach(c=>c.focus=wk);save();toast("Referência aplicada. Abra a turma para gerar o ciclo.");render()}}
@@ -1931,14 +1867,14 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       }
       const choice=(kind,value,label,selected)=>`<button type="button" class="choice ${selected===value?"sel":""}" data-ped-${kind}="${value}">${esc(label)}</button>`;
       const execution=result?.ok?(p.executionError===true?`<div class="callout" style="margin-top:0"><div class="row"><p class="label" style="margin:0">Erro de execução</p><button type="button" class="btn ghost" id="cancelExecution">Cancelar</button></div><p style="margin:.6rem 0;font-size:.84rem;font-weight:850">O que falhou?</p><div class="quick3">${TECHNICAL_EXECUTION_OPTIONS.map(([id,label])=>choice("issue",id,label,p.executionIssue)).join("")}</div></div>`:`<button type="button" class="btn ghost" id="reportExecutionError">A decisão foi boa, mas houve erro de execução?</button>`):"";
-      const focus=result?`<div class="focus-card"><div class="row"><p class="eyebrow" style="color:var(--primary)">Cartão de Foco da Aula</p><span class="badge ${result.ok?"":"warn"}">${result.ok?"Coerente":"Ajustar leitura"}</span></div><div class="focus-line"><p class="label">Foco técnico / tático</p><h3 class="display">${esc(result.focus)}</h3></div><div class="focus-line"><p class="label">Ponto de atenção</p><p>${esc(result.feedback)} ${esc(result.observe)}</p></div><div class="focus-line"><p class="label">Dinâmica rápida</p><p>${esc(result.dynamic)}</p></div>${result.executionFeedback?`<div class="copy" style="color:var(--fg)"><strong>${esc(result.executionFeedback)}</strong></div>`:""}<button type="button" class="btn outline" id="expandPedagogy">${p.expanded?"Ocultar sugestões":"Expandir sugestões"}</button>${p.expanded?`<div class="copy"><strong>Pergunta:</strong> ${esc(result.question)}<br><strong>Progressão:</strong> ${esc(result.progression)}</div>`:""}</div>${execution}`:"";
+      const focus=result?`<div class="focus-card"><div class="row"><p class="eyebrow" style="color:var(--primary)">Cartão de Foco da Aula</p><span class="badge ${result.ok?"":"warn"}">${result.ok?"Coerente":"Ajustar leitura"}</span></div><h3 class="display">${esc(result.focus)}</h3><div class="focus-line"><p class="label">Diagnóstico</p><p>${esc(result.feedback)}</p></div><div class="focus-line"><p class="label">Observar hoje</p><p>${esc(result.observe)}</p></div><div class="focus-line"><p class="label">Dinâmica</p><p>${esc(result.dynamic)}</p></div>${result.executionFeedback?`<div class="copy" style="color:var(--fg)"><strong>${esc(result.executionFeedback)}</strong></div>`:""}<button type="button" class="btn outline" id="expandPedagogy">${p.expanded?"Ocultar sugestões":"Expandir sugestões"}</button>${p.expanded?`<div class="copy"><strong>Pergunta:</strong> ${esc(result.question)}<br><strong>Progressão:</strong> ${esc(result.progression)}</div>`:""}</div>${execution}`:"";
       host.innerHTML=`<div class="section-head"><div><h2 style="color:var(--fg);font-size:1rem;letter-spacing:0;text-transform:none">Motor Pedagógico</h2><p class="muted" style="margin:.2rem 0 0;font-size:.76rem;font-weight:800">Árvore 01 · 2 toques para definir o foco</p></div>${result?'<button type="button" id="clearPedagogy" class="btn ghost">Limpar</button>':'<span class="badge cyan">MVP</span>'}</div>${state.match?'<button type="button" class="btn ghost" id="closePedagogyPanel">Voltar ao placar</button>':""}<p class="label" style="margin:0">1. Contexto da bola</p><div class="quick3">${tree.contexts.map(([id,label])=>choice("context",id,label,p.context)).join("")}</div><p class="label" style="margin:0">2. Decisão do aluno</p><div class="quick3">${tree.decisions.map(([id,label])=>choice("decision",id,label,p.decision)).join("")}</div>${focus}`;
-      host.querySelectorAll("[data-ped-context]").forEach(b=>b.onclick=()=>{p.context=b.dataset.pedContext;p.executionError=null;p.executionIssue="";p.expanded=false;p.touches=1;p.startedAt=Date.now();save();trackUsage("focus_context_selected",{context:p.context},null,1);renderPedagogicalMotor()});
-      host.querySelectorAll("[data-ped-decision]").forEach(b=>b.onclick=()=>{p.decision=b.dataset.pedDecision;p.executionError=null;p.executionIssue="";p.expanded=false;p.touches=(p.touches||0)+1;const ms=p.startedAt?Date.now()-p.startedAt:null;save();trackUsage("focus_card_view",{context:p.context,decision:p.decision,coherent:evaluatePedagogicalSituation(p.treeId,p.context,p.decision)?.ok===true},ms,p.touches);renderPedagogicalMotor()});
-      host.querySelectorAll("[data-ped-issue]").forEach(b=>b.onclick=()=>{p.executionIssue=b.dataset.pedIssue;save();trackUsage("focus_execution_issue",{issue:p.executionIssue});renderPedagogicalMotor()});
+      host.querySelectorAll("[data-ped-context]").forEach(b=>b.onclick=()=>{p.context=b.dataset.pedContext;p.executionError=null;p.executionIssue="";p.expanded=false;save();renderPedagogicalMotor()});
+      host.querySelectorAll("[data-ped-decision]").forEach(b=>b.onclick=()=>{p.decision=b.dataset.pedDecision;p.executionError=null;p.executionIssue="";p.expanded=false;save();renderPedagogicalMotor()});
+      host.querySelectorAll("[data-ped-issue]").forEach(b=>b.onclick=()=>{p.executionIssue=b.dataset.pedIssue;save();renderPedagogicalMotor()});
       const reportExecution=document.getElementById("reportExecutionError");if(reportExecution)reportExecution.onclick=()=>{p.executionError=true;p.executionIssue="";save();renderPedagogicalMotor()};
       const cancelExecution=document.getElementById("cancelExecution");if(cancelExecution)cancelExecution.onclick=()=>{p.executionError=null;p.executionIssue="";save();renderPedagogicalMotor()};
-      const expand=document.getElementById("expandPedagogy");if(expand)expand.onclick=()=>{p.expanded=!p.expanded;save();if(p.expanded)trackUsage("focus_suggestions_expanded",{context:p.context,decision:p.decision});renderPedagogicalMotor()};
+      const expand=document.getElementById("expandPedagogy");if(expand)expand.onclick=()=>{p.expanded=!p.expanded;save();renderPedagogicalMotor()};
       const clear=document.getElementById("clearPedagogy");if(clear)clear.onclick=()=>{state.pedagogy={treeId:p.treeId,context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:p.panelOpen};save();renderPedagogicalMotor()};
       const closePanel=document.getElementById("closePedagogyPanel");if(closePanel)closePanel.onclick=()=>{p.panelOpen=false;save();renderPedagogicalMotor()};
     }
@@ -1961,14 +1897,14 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       if(roster.length<required)return toast(singles?"Escolha ao menos dois atletas para criar um jogo de simples.":"Esta turma precisa de pelo menos quatro alunos para criar scout de duplas.");
       const a=singles?[a1.value]:[a1.value,a2.value],b=singles?[b1.value]:[b1.value,b2.value];
       if(new Set([...a,...b]).size<required)return toast(singles?"Escolha dois atletas diferentes.":"Escolha quatro alunos diferentes.");
-      const mode=document.getElementById("scoutMode")?.value||"lesson4",id=recordId();
+      const mode=document.getElementById("scoutMode")?.value||"lesson4",id=supabaseClient&&crypto.randomUUID?crypto.randomUUID():uid();
       state.match={id,class_id:scoutClass?.value||"",title:matchTitle.value||"Partida ao vivo",game_type:gameType,a,b,mode,scoreState:initialScoutScore(mode),points:[],tab:"points",ended:false,ended_at:null};
       state.pedagogy.panelOpen=false;
       state.draftPoint={server:a[0],serve_side:"Direita",winner:"a",outcome:"Winner",technique:"",zone:"",final_player:""};
-      save();syncPushScoutMatch(state.match);trackUsage("scout_started",{game_type:gameType,mode});toast(`Scout de ${scoutGameLabel(state.match).toLowerCase()} iniciado.`);render();
+      save();syncPushScoutMatch(state.match);toast(`Scout de ${scoutGameLabel(state.match).toLowerCase()} iniciado.`);render();
     }
     function archiveScoutMatch(m){if(!m)return;state.scoutHistory=[JSON.parse(JSON.stringify(m)),...(state.scoutHistory||[]).filter(x=>x.id!==m.id)].slice(0,50)}
-    function finishScoutMatch(){const m=state.match;if(!m||!m.points?.length)return toast("Registre ao menos um ponto antes de encerrar.");if(!confirm("Encerrar este scout e salvar no histórico?"))return;m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m);save();syncPushScoutMatch(m);trackUsage("scout_finished",{game_type:scoutGameLabel(m),points:m.points.length});toast("Scout encerrado e salvo no histórico.");render()}
+    function finishScoutMatch(){const m=state.match;if(!m||!m.points?.length)return toast("Registre ao menos um ponto antes de encerrar.");if(!confirm("Encerrar este scout e salvar no histórico?"))return;m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m);save();syncPushScoutMatch(m);toast("Scout encerrado e salvo no histórico.");render()}
     function startNewScoutMatch(){const m=state.match;if(m?.points?.length&&!m.ended){if(!confirm("Criar nova partida encerra e salva o Scout atual. Continuar?"))return;m.ended=true;m.ended_at=new Date().toISOString();archiveScoutMatch(m);syncPushScoutMatch(m)}state.match=null;state.draftPoint={};save();render()}
     function openScoutHistory(id){const m=(state.scoutHistory||[]).find(x=>x.id===id);if(!m)return;state.match=JSON.parse(JSON.stringify(m));state.match.tab="analysis";save();render()}
     const SCOUT_OUTCOMES=["Winner","Erro não forçado","Forçou o erro","Ace","Erro de saque","Erro de devolução"];
@@ -2029,8 +1965,8 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     function teamsHtml(m){const singles=scoutIsSingles(m),unit=singles?"atleta":"dupla";return`<div class="callout"><strong>${singles?"Leitura por lado":"Leitura coletiva"}</strong><p class="muted">${singles?"Cada atleta é analisado":"A dupla é analisada"} pela intenção, risco e transição que aparece nas ações registradas.</p></div>${["a","b"].map(side=>{const actions=teamActions(m,side),a=semanticScope(actions),lostServe=m.points.filter(p=>p.server_team===side&&p.winner_team!==side).length;return`<div class="card pad" style="margin-top:.75rem"><p class="eyebrow" style="color:var(--primary)">${esc(unit)} ${side.toUpperCase()}</p><strong>${esc(team(m[side]))}</strong><p class="muted" style="margin:.45rem 0 0">${esc(a.profile)} · ${esc(a.confidence)}<br>${esc(a.diagnosis)}<br>Perdas no saque: ${lostServe} · Intenção dominante: ${esc(a.topIntent)}</p><p class="label" style="margin-top:.8rem">Transição para treinar</p><strong>${esc(a.transition)}</strong>${semanticRadarHtml(a.radar,a.radarVolume)}</div>`}).join("")}`}
     function playersHtml(m){return`<div class="callout"><strong>Perfis individuais</strong><p class="muted">A leitura aparece quando o executor é informado no ponto. Ela descreve comportamento, não substitui avaliação técnica.</p></div>${[...m.a,...m.b].map(id=>{const ps=m.points.filter(p=>(p.final_player_id||p.finisher)===id),a=semanticScope(ps);return`<div class="card pad" style="margin-top:.75rem"><p class="eyebrow" style="color:var(--primary)">${esc(student(id)?.name||"Aluno")}</p><strong>${esc(a.profile)}</strong><p class="muted" style="margin:.4rem 0 0">${esc(a.diagnosis)} · ${esc(a.confidence)}<br>${esc(a.transition)}</p>${semanticRadarHtml(a.radar,a.radarVolume)}</div>`}).join("")}`}
     function renderFinance(){const paid=state.payments.filter(p=>p.status==="pago").reduce((s,p)=>s+ +p.amount,0),due=state.payments.filter(p=>p.status!=="pago"),goal=Math.min(100,Math.round(paid/GOAL*100));finPaid.textContent=money(paid).replace(",00","");finDue.textContent=due.length;finGoal.textContent=goal+"%";monthRevenue.textContent=money(paid);finProgress.style.width=goal+"%";debts.innerHTML=due.length?due.map(p=>{const s=student(p.student_id);return`<div class="item" style="grid-template-columns:1fr auto"><div><strong>${esc(s?.name)}</strong><p class="muted" style="margin:.2rem 0 0">${money(p.amount)} · venc. ${p.due}</p></div><div class="row"><button class="btn icon primary" data-pay="${p.id}">✓</button><button class="btn ghost" data-charge="${p.id}">Cobrar</button></div></div>`}).join(""):`<div class="empty">Sem inadimplências. Bom treino! 💚</div>`;debts.querySelectorAll("[data-pay]").forEach(b=>b.onclick=()=>{state.payments.find(p=>p.id===b.dataset.pay).status="pago";save();toast("Mensalidade paga.");render()});debts.querySelectorAll("[data-charge]").forEach(b=>b.onclick=()=>openCharge(b.dataset.charge))}
-    function openPoint(){const m=state.match,s=ensureScoutState(m),players=scoutParticipants(m),singles=scoutIsSingles(m),fixedServer=currentScoutServer(m),suggested=(fixedServer||scoutServerOptions(m)[0]||players[0]),old=state.draftPoint||{};if(!state.usageFlow||state.usageFlow.kind!=="scout_point"){state.usageFlow={kind:"scout_point",startedAt:Date.now(),touches:1};trackUsage("scout_register_open",{game_type:scoutGameLabel(m)},null,1)}state.draftPoint={server:fixedServer||old.server||suggested,serve_side:old.serve_side||"Direita",winner:old.winner||"a",outcome:old.outcome||"Winner",technique:old.technique||"",zone:old.zone||"",final_player:old.final_player||""};const d=state.draftPoint,serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque",ch=(g,v,label=student(v)?.name||v)=>`<button class="choice ${d[g]===v?"sel":""}" data-choice="${g}" data-val="${esc(v)}">${esc(label)}</button>`,serverChoices=fixedServer?[fixedServer]:scoutServerOptions(m),intent=serveEvent?"Neutro":(d.technique?inferIntention(d.technique,d.outcome,d.zone):"--");pointForm.innerHTML=`<div class="callout"><strong>${team(m.a)} ${s.games.a} x ${s.games.b} ${team(m.b)}</strong><p class="muted" style="margin:.3rem 0 0">${esc(scoutGameLabel(m))} · ${scoutScoreText(s)} · ${scoutDeciding(s)?"Ponto decisivo":"Game em andamento"}</p></div><p class="label">Sacador ${fixedServer?"· rotação automática":""}</p><div class="grid2">${serverChoices.map(id=>ch("server",id)).join("")}</div><p class="label">Posição do saque</p><div class="grid2">${["Direita","Centro","Esquerda"].map(x=>ch("serve_side",x,x)).join("")}</div><p class="label">Quem venceu o ponto?</p><div class="grid2">${ch("winner","a",singles?"Atleta A":"Dupla A")}${ch("winner","b",singles?"Atleta B":"Dupla B")}</div><p class="label">Como terminou?</p><div class="grid2">${SCOUT_OUTCOMES.map(x=>ch("outcome",x,x)).join("")}</div>${serveEvent?`<div class="callout"><strong>Evento de saque</strong><p class="muted" style="margin:.35rem 0 0">Técnica e intenção serão salvas automaticamente como Saque · Neutro.</p></div>`:`<p class="label">Técnica principal</p><div class="grid2">${SCOUT_TECHNIQUES.map(x=>ch("technique",x,x)).join("")}</div><p class="label">Zona <span class="muted">(opcional)</span></p><div class="grid2">${["Verde","Amarela","Vermelha"].map(x=>ch("zone",x,x)).join("")}</div><p class="label">Executor <span class="muted">(opcional)</span></p><div class="grid2">${players.map(id=>ch("final_player",id)).join("")}</div><div class="callout"><strong>Intenção inferida: ${esc(intent)}</strong><p class="muted" style="margin:.35rem 0 0">O sistema interpreta o contexto; o professor registra apenas o que viu.</p></div>`}<button id="savePoint" class="btn primary">Salvar ponto</button>`;pointModal.classList.add("open");pointForm.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{state.usageFlow.touches=(state.usageFlow.touches||1)+1;state.draftPoint[b.dataset.choice]=b.dataset.val;openPoint()});savePoint.onclick=savePointFn}
-    function savePointFn(){const m=state.match,d=state.draftPoint,s=ensureScoutState(m),serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque";if(!d.server||!d.serve_side||!d.winner||!d.outcome)return toast("Marque saque, vencedor e desfecho.");if(!serveEvent&&!d.technique)return toast("Marque a técnica principal.");const before=JSON.parse(JSON.stringify(s)),technique=serveEvent?"Saque":d.technique,intention=inferIntention(technique,d.outcome,d.zone),executor=serveEvent?d.server:(d.final_player||""),executorTeam=executor?teamOf(executor):"",serverTeam=teamOf(d.server);if(!currentScoutServer(m)&&!s.serveRotation[s.serverGameIndex])s.serveRotation.push(d.server);m.scoreState=applyScoutWinner(s,d.winner);const after=m.scoreState,point={id:recordId(),point_number:m.points.length+1,set_number:before.set_number,server_id:d.server,server_name:student(d.server)?.name||"",server_team:serverTeam,serve_side:d.serve_side,winner_team:d.winner,outcome:d.outcome,technique,inferred_intention:intention,zone:serveEvent?"":d.zone,final_player_id:executor,final_player_name:student(executor)?.name||"",final_player_team:executorTeam,score_before:scoutScoreText(before),score_after:scoutScoreText(after),games_before:`${before.games.a}x${before.games.b}`,games_after:`${after.games.a}x${after.games.b}`,sets_before:`${before.sets.a}x${before.sets.b}`,sets_after:`${after.sets.a}x${after.sets.b}`,is_deciding_point:scoutDeciding(before),is_tiebreak:before.tie,is_super_tiebreak:before.superTie,created_at:new Date().toISOString()};point.tactical_issue=tacticalIssue(point);m.points.push(point);let event=null;if(executor){const fund=shotFund(technique,d.outcome),kind=outcomeKind(d.outcome),score=kind==="winner"?9:kind==="error"?3:8;event={id:recordId(),student_id:executor,fundamental:fund,kind,score,outcome:d.outcome,shot:technique,technique,inferred_intention:intention,tactical_issue:point.tactical_issue,zone:point.zone,is_deciding_point:point.is_deciding_point,is_tiebreak:point.is_tiebreak,is_super_tiebreak:point.is_super_tiebreak,note:`${d.outcome} em ${technique}${point.zone?" (Zona "+point.zone+")":""}. ${point.tactical_issue||""}`,created:new Date().toISOString()};state.scout_events.unshift(event)}if(after.finished){m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m)}const flow=state.usageFlow;state.usageFlow=null;state.draftPoint={};save();syncPushScoutMatch(m);syncPushScoutPoint(point,m);if(event)syncPushScoutEvent(event,m);trackUsage("scout_point_saved",{outcome:point.outcome,technique:point.technique,zone:point.zone||"Sem zona"},flow?.startedAt?Date.now()-flow.startedAt:null,flow?.touches||null);closeAll();toast(after.finished?"Partida encerrada e salva no histórico.":point.tactical_issue?"Ponto registrado com alerta contextual.":"Ponto registrado e contexto interpretado.");render()}
+    function openPoint(){const m=state.match,s=ensureScoutState(m),players=scoutParticipants(m),singles=scoutIsSingles(m),fixedServer=currentScoutServer(m),suggested=(fixedServer||scoutServerOptions(m)[0]||players[0]),old=state.draftPoint||{};state.draftPoint={server:fixedServer||old.server||suggested,serve_side:old.serve_side||"Direita",winner:old.winner||"a",outcome:old.outcome||"Winner",technique:old.technique||"",zone:old.zone||"",final_player:old.final_player||""};const d=state.draftPoint,serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque",ch=(g,v,label=student(v)?.name||v)=>`<button class="choice ${d[g]===v?"sel":""}" data-choice="${g}" data-val="${esc(v)}">${esc(label)}</button>`,serverChoices=fixedServer?[fixedServer]:scoutServerOptions(m),intent=serveEvent?"Neutro":(d.technique?inferIntention(d.technique,d.outcome,d.zone):"--");pointForm.innerHTML=`<div class="callout"><strong>${team(m.a)} ${s.games.a} x ${s.games.b} ${team(m.b)}</strong><p class="muted" style="margin:.3rem 0 0">${esc(scoutGameLabel(m))} · ${scoutScoreText(s)} · ${scoutDeciding(s)?"Ponto decisivo":"Game em andamento"}</p></div><p class="label">Sacador ${fixedServer?"· rotação automática":""}</p><div class="grid2">${serverChoices.map(id=>ch("server",id)).join("")}</div><p class="label">Posição do saque</p><div class="grid2">${["Direita","Centro","Esquerda"].map(x=>ch("serve_side",x,x)).join("")}</div><p class="label">Quem venceu o ponto?</p><div class="grid2">${ch("winner","a",singles?"Atleta A":"Dupla A")}${ch("winner","b",singles?"Atleta B":"Dupla B")}</div><p class="label">Como terminou?</p><div class="grid2">${SCOUT_OUTCOMES.map(x=>ch("outcome",x,x)).join("")}</div>${serveEvent?`<div class="callout"><strong>Evento de saque</strong><p class="muted" style="margin:.35rem 0 0">Técnica e intenção serão salvas automaticamente como Saque · Neutro.</p></div>`:`<p class="label">Técnica principal</p><div class="grid2">${SCOUT_TECHNIQUES.map(x=>ch("technique",x,x)).join("")}</div><p class="label">Zona <span class="muted">(opcional)</span></p><div class="grid2">${["Verde","Amarela","Vermelha"].map(x=>ch("zone",x,x)).join("")}</div><p class="label">Executor <span class="muted">(opcional)</span></p><div class="grid2">${players.map(id=>ch("final_player",id)).join("")}</div><div class="callout"><strong>Intenção inferida: ${esc(intent)}</strong><p class="muted" style="margin:.35rem 0 0">O sistema interpreta o contexto; o professor registra apenas o que viu.</p></div>`}<button id="savePoint" class="btn primary">Salvar ponto</button>`;pointModal.classList.add("open");pointForm.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{state.draftPoint[b.dataset.choice]=b.dataset.val;openPoint()});savePoint.onclick=savePointFn}
+    function savePointFn(){const m=state.match,d=state.draftPoint,s=ensureScoutState(m),serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque";if(!d.server||!d.serve_side||!d.winner||!d.outcome)return toast("Marque saque, vencedor e desfecho.");if(!serveEvent&&!d.technique)return toast("Marque a técnica principal.");const before=JSON.parse(JSON.stringify(s)),technique=serveEvent?"Saque":d.technique,intention=inferIntention(technique,d.outcome,d.zone),executor=serveEvent?d.server:(d.final_player||""),executorTeam=executor?teamOf(executor):"",serverTeam=teamOf(d.server),dbId=()=>supabaseClient&&crypto.randomUUID?crypto.randomUUID():uid();if(!currentScoutServer(m)&&!s.serveRotation[s.serverGameIndex])s.serveRotation.push(d.server);m.scoreState=applyScoutWinner(s,d.winner);const after=m.scoreState,point={id:dbId(),point_number:m.points.length+1,set_number:before.set_number,server_id:d.server,server_name:student(d.server)?.name||"",server_team:serverTeam,serve_side:d.serve_side,winner_team:d.winner,outcome:d.outcome,technique,inferred_intention:intention,zone:serveEvent?"":d.zone,final_player_id:executor,final_player_name:student(executor)?.name||"",final_player_team:executorTeam,score_before:scoutScoreText(before),score_after:scoutScoreText(after),games_before:`${before.games.a}x${before.games.b}`,games_after:`${after.games.a}x${after.games.b}`,sets_before:`${before.sets.a}x${before.sets.b}`,sets_after:`${after.sets.a}x${after.sets.b}`,is_deciding_point:scoutDeciding(before),is_tiebreak:before.tie,is_super_tiebreak:before.superTie,created_at:new Date().toISOString()};point.tactical_issue=tacticalIssue(point);m.points.push(point);let event=null;if(executor){const fund=shotFund(technique,d.outcome),kind=outcomeKind(d.outcome),score=kind==="winner"?9:kind==="error"?3:8;event={id:dbId(),student_id:executor,fundamental:fund,kind,score,outcome:d.outcome,shot:technique,technique,inferred_intention:intention,tactical_issue:point.tactical_issue,zone:point.zone,is_deciding_point:point.is_deciding_point,is_tiebreak:point.is_tiebreak,is_super_tiebreak:point.is_super_tiebreak,note:`${d.outcome} em ${technique}${point.zone?" (Zona "+point.zone+")":""}. ${point.tactical_issue||""}`,created:new Date().toISOString()};state.scout_events.unshift(event)}if(after.finished){m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m)}state.draftPoint={};save();syncPushScoutMatch(m);syncPushScoutPoint(point,m);if(event)syncPushScoutEvent(event,m);closeAll();toast(after.finished?"Partida encerrada e salva no histórico.":point.tactical_issue?"Ponto registrado com alerta contextual.":"Ponto registrado e contexto interpretado.");render()}
     async function refreshRemoteConfirmations(cid){
       if(!supabaseClient)return;
       const s=session(cid);
@@ -2184,48 +2120,47 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     function wireEvalForm(){const cls=document.getElementById("evalClassFilter"),sel=document.getElementById("evalStudent");if(cls&&sel)cls.onchange=()=>{let first="";sel.querySelectorAll("option").forEach(o=>{const ok=!cls.value||(o.dataset.classes||"").split(",").includes(cls.value);o.hidden=!ok;if(ok&&!first)first=o.value});if(first)sel.value=first};modalForm.querySelectorAll("[data-fill-eval]").forEach(b=>b.onclick=()=>fundamentals.forEach(f=>setEvalScore(f,b.dataset.fillEval,evalLabels[b.dataset.fillEval]||"Ok")));modalForm.querySelectorAll("[data-eval-fund]").forEach(b=>b.onclick=()=>setEvalScore(b.dataset.evalFund,b.dataset.evalScore,b.dataset.evalLabel))}
     modalForm.onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));
       const submitAction=e.submitter?.value||"save";
-      let synced=true;
       if(modalKind==="class"){
         let c=editing?klass(editing):null;
         if(c)Object.assign(c,{name:d.name,level:d.level,weekday:+d.weekday,start:d.start,capacity:+d.capacity,focus:d.focus});
-        else{c={id:recordId(),name:d.name,level:d.level,weekday:+d.weekday,start:d.start,capacity:+d.capacity,focus:d.focus};state.classes.push(c)}
-        synced=(await syncPushClass(c)!==false)&&synced;
+        else{c={id:uid(),name:d.name,level:d.level,weekday:+d.weekday,start:d.start,capacity:+d.capacity,focus:d.focus};state.classes.push(c)}
+        syncPushClass(c);
       }
       if(modalKind==="student"){
         const previousClass=editing?state.enroll.find(e=>e.student_id===editing)?.class_id:"";
-        const sid=editing||recordId();
+        const sid=editing||uid();
         let s=student(sid);
         if(s)Object.assign(s,{name:d.name,phone:d.phone,level:d.level});
         else{s={id:sid,name:d.name,phone:d.phone,level:d.level};state.students.push(s)}
-        synced=(await syncPushStudent(s)!==false)&&synced;
+        await syncPushStudent(s);
         if(previousClass&&previousClass!==d.class_id){
           state.enroll=state.enroll.filter(e=>!(e.student_id===sid&&e.class_id===previousClass));
-          await syncDeleteEnrollment(previousClass,sid);
+          syncDeleteEnrollment(previousClass,sid);
         }
         if(d.class_id&&!state.enroll.some(e=>e.class_id===d.class_id&&e.student_id===sid)){
           state.enroll.push({class_id:d.class_id,student_id:sid});
-          synced=(await syncPushEnrollment(d.class_id,sid)!==false)&&synced;
+          syncPushEnrollment(d.class_id,sid);
         }
         if(!d.class_id)state.enroll=state.enroll.filter(e=>e.student_id!==sid);
       }
       if(modalKind==="payment"){
-        const p={id:recordId(),student_id:d.student_id,amount:+d.amount,due:d.due,status:"pendente",pix:d.pix||"PIX-BEACHFLOW-"+uid().toUpperCase()};
+        const p={id:uid(),student_id:d.student_id,amount:+d.amount,due:d.due,status:"pendente",pix:d.pix||"PIX-BEACHFLOW-"+uid().toUpperCase()};
         state.payments.push(p);
-        synced=(await syncPushPayment(p)!==false)&&synced;
+        syncPushPayment(p);
       }
       if(modalKind==="ops") state.ops.unshift({id:uid(),kind:d.kind,text:d.text,resolved:false});
       if(modalKind==="eval"){
-        const newEvals=fundamentals.map(f=>({id:recordId(),student_id:d.student_id,evaluator:"teacher",fundamental:f,score:+d[f]}));
-        for(const evaluation of newEvals){state.evals.push(evaluation);synced=(await syncPushEval(evaluation)!==false)&&synced}
+        const newEvals=fundamentals.map(f=>({id:uid(),student_id:d.student_id,evaluator:"teacher",fundamental:f,score:+d[f]}));
+        newEvals.forEach(e=>{state.evals.push(e);syncPushEval(e);});
         save();
         if(submitAction==="next"){
           const sel=document.getElementById("evalStudent"),visible=[...sel.options].filter(o=>!o.hidden);
           const i=visible.findIndex(o=>o.value===d.student_id),next=visible[i+1]||visible[0];
-          if(next){sel.value=next.value;modalForm.querySelectorAll("#evalRows select").forEach(s=>s.value="6.5");toast(synced?"Avaliação salva. Próximo aluno.":"Avaliação no aparelho; sincronização pendente.");return}
+          if(next){sel.value=next.value;modalForm.querySelectorAll("#evalRows select").forEach(s=>s.value="6.5");toast("Avaliação salva. Próximo aluno.");return}
         }
       }
-      save();closeAll();toast(!supabaseClient?"Salvo neste aparelho.":synced?"Salvo e sincronizado.":"Salvo neste aparelho; sincronização pendente.");render()}
-    function closeAll(){if(pointModal.classList.contains("open")&&state.usageFlow?.kind==="scout_point"){const flow=state.usageFlow;state.usageFlow=null;trackUsage("scout_register_abandoned",{},flow.startedAt?Date.now()-flow.startedAt:null,flow.touches||null)}document.querySelectorAll(".modal").forEach(m=>m.classList.remove("open"))}function wireCreates(){document.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>openCreate(b.dataset.create,b.dataset.id||null));document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openCreate("class",b.dataset.edit)})}
+      save();closeAll();toast("Salvo e sincronizado.");render()}
+    function closeAll(){document.querySelectorAll(".modal").forEach(m=>m.classList.remove("open"))}function wireCreates(){document.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>openCreate(b.dataset.create,b.dataset.id||null));document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openCreate("class",b.dataset.edit)})}
     tabLogin.onclick=()=>{state.mode="login";nameBox.classList.add("hidden");tabLogin.classList.add("active");tabSignup.classList.remove("active")};
     tabSignup.onclick=()=>{state.mode="signup";nameBox.classList.remove("hidden");tabSignup.classList.add("active");tabLogin.classList.remove("active")};
     authForm.onsubmit=async e=>{
@@ -2258,7 +2193,6 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       }
       save();
       save();render();
-      trackUsage("app_open",{source:"login",display_mode:matchMedia("(display-mode: standalone)").matches?"standalone":"browser"});
       // Puxa dados do Supabase após login — garante sincronização entre dispositivos
       toast("Carregando seus dados...");
       const pulled = await syncPull();
@@ -2269,7 +2203,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       }
       render();
     };
-    logout.onclick=async()=>{trackUsage("session_closed",{page:state.page});if(supabaseClient)await supabaseClient.auth.signOut();state.session=false;state.page="today";save();render()};
+    logout.onclick=async()=>{if(supabaseClient)await supabaseClient.auth.signOut();state.session=false;state.page="today";save();render()};
     confirmToday.onclick=sendTodayConfirmations;
     document.addEventListener("click",e=>{
       const scoutStart=e.target.closest("#createMatch");
@@ -2280,21 +2214,20 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       const selfAssessBody=document.getElementById("selfAssessBody");
       selfAssessBody.innerHTML=state.students.map(s=>`<div class="item" style="grid-template-columns:1fr auto"><div><strong>${esc(s.name)}</strong><p class="muted" style="margin:.2rem 0 0">${esc(s.level)} · ${esc(s.phone||"sem WhatsApp")}</p></div><button class="btn outline" data-sa-send="${s.id}">Enviar</button></div>`).join("");
       document.getElementById("selfAssessModal").classList.add("open");
-      selfAssessBody.querySelectorAll("[data-sa-send]").forEach(b=>b.onclick=async()=>{
+      selfAssessBody.querySelectorAll("[data-sa-send]").forEach(b=>b.onclick=()=>{
         const s=student(b.dataset.saSend);
         if(!s.phone)return toast(s.name+" não tem WhatsApp cadastrado.");
-        try{openZap(await prepareSelfAssessMessage(s.id),s.phone)}catch(err){return toast(err.message)}
+        openZap(selfAssessMessage(s.id),s.phone);
         b.textContent="Enviado ✓";b.classList.remove("outline");b.classList.add("primary");b.disabled=true;
       });
     });document.querySelectorAll(".nav").forEach(b=>b.onclick=async()=>{
-  state.page=b.dataset.page;save();trackUsage("page_open",{page:state.page});render();
+  state.page=b.dataset.page;save();render();
   // Sincroniza automaticamente ao abrir Alunos ou Aulas - pega autoavaliacoes novas antes do Ciclo IA
   if((b.dataset.page==="students"||b.dataset.page==="classes")&&supabaseClient){
     await syncPull();render();
   }
 });closeModal.onclick=closeAll;document.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeAll);document.querySelectorAll(".modal").forEach(m=>m.onclick=e=>{if(e.target===m)closeAll()});profileSelect.onchange=()=>{state.selected=profileSelect.value;save();renderStudents()};blindSelect.onchange=()=>{state.reveal=null;save();renderBlind()};// sendBlind removed — autoavaliação agora é enviada pelo aluno via link
     render();
-    if(state.session) trackUsage("app_open",{source:"saved_session",display_mode:matchMedia("(display-mode: standalone)").matches?"standalone":"browser"});
 
     // ── Supabase: restaurar sessão ativa após reload ──
     if(supabaseClient){
@@ -2307,7 +2240,6 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
           state.teacherId=sess.user.id;
           state.accessToken=sess.access_token;
           save();render();
-          trackUsage("app_open",{source:"session_restore",display_mode:matchMedia("(display-mode: standalone)").matches?"standalone":"browser"});
           // Puxa dados do Supabase ao restaurar sessão
           await syncPull();
           render();
@@ -2335,14 +2267,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     }
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').then(registration=>{
-        registration.update().catch(()=>{});
-        navigator.serviceWorker.addEventListener('controllerchange',()=>{
-          if(sessionStorage.getItem('bf_sw_reloaded'))return;
-          sessionStorage.setItem('bf_sw_reloaded','1');
-          location.reload();
-        });
-      }).catch(()=>{});
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
   </script>
 </body>
