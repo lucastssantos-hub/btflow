@@ -658,14 +658,16 @@
       fundamentals.forEach(f=>saScores[f]="6.5");
       function renderSAForm(done=false){
         if(done){selfAssessForm.innerHTML=`<div class="callout" style="text-align:center"><span style="font-size:2.5rem">🎾</span><h2 class="display" style="font-size:1.35rem;margin:.5rem 0">Avaliação enviada!</h2><p class="muted" style="line-height:1.5">Obrigado, ${esc(studentName)}! Seu professor já recebeu os dados e vai usar isso para personalizar os próximos treinos.</p></div>`;return}
-        selfAssessForm.innerHTML=`${fundamentals.map(f=>`<div class="card pad" style="display:grid;gap:.6rem"><div class="row"><strong>${esc(f)}</strong><span class="badge cyan" id="saBadge-${esc(f)}">${esc(evalLabels[saScores[f]]||"Ok")} · ${saScores[f]}</span></div><p class="muted" style="margin:0;line-height:1.35;font-size:.76rem">${(evalCriteria[f]||[]).map(esc).join(" · ")}</p><div class="grid2">${evalScale.map(v=>`<button class="choice ${saScores[f]===v?"sel":""}" type="button" data-sa-fund="${esc(f)}" data-sa-score="${v}">${esc(evalLabels[v])}<br><span class="muted" style="font-size:.68rem;font-weight:700">${esc((evalRubric[f]||{})[v]||"")}</span></button>`).join("")}</div></div>`).join("")}<button id="submitSelfAssess" class="btn primary" style="margin-top:.5rem">Enviar avaliação</button>`;
+        selfAssessForm.innerHTML=`${fundamentals.map(f=>`<div class="card pad" style="display:grid;gap:.6rem"><div class="row"><strong>${esc(f)}</strong><span class="badge cyan" id="saBadge-${esc(f)}">${esc(evalLabels[saScores[f]]||"Ok")} · ${saScores[f]}</span></div><p class="muted" style="margin:0;line-height:1.35;font-size:.76rem">${(evalCriteria[f]||[]).map(esc).join(" · ")}</p><div class="grid2">${evalScale.map(v=>`<button class="choice ${saScores[f]===v?"sel":""}" type="button" data-sa-fund="${esc(f)}" data-sa-score="${v}">${esc(evalLabels[v])}<br><span class="muted" style="font-size:.68rem;font-weight:700">${esc((evalRubric[f]||{})[v]||"")}</span></button>`).join("")}</div></div>`).join("")}<div id="selfAssessError" class="callout hidden" style="border:1px solid color-mix(in oklch,var(--danger) 48%,transparent);color:var(--fg);line-height:1.45"></div><button id="submitSelfAssess" class="btn primary" style="margin-top:.5rem">Enviar avaliação</button>`;
         selfAssessForm.querySelectorAll("[data-sa-score]").forEach(b=>b.onclick=()=>{saScores[b.dataset.saFund]=b.dataset.saScore;const badge=document.getElementById("saBadge-"+b.dataset.saFund);if(badge)badge.textContent=`${evalLabels[b.dataset.saScore]||"Ok"} · ${b.dataset.saScore}`;selfAssessForm.querySelectorAll(`[data-sa-fund="${b.dataset.saFund}"]`).forEach(x=>x.classList.toggle("sel",x.dataset.saScore===b.dataset.saScore))});
         document.getElementById("submitSelfAssess").onclick=async()=>{
           const btn=document.getElementById("submitSelfAssess");
+          const errorBox=document.getElementById("selfAssessError");
+          if(errorBox){errorBox.textContent="";errorBox.classList.add("hidden")}
           btn.textContent="Enviando...";btn.disabled=true;
           const cfg=window.BEACHFLOW_SUPABASE||{};
           // Busca teacher_id e student_id pelo token via Supabase
-          let saved=false;
+          let saved=false,saveError="";
           if(cfg.url&&cfg.anonKey){
             try{
               // Chama RPC anon para salvar autoavaliação
@@ -675,12 +677,23 @@
                 body:JSON.stringify({p_token:token,p_scores:saScores})
               });
               if(res.ok)saved=true;
-              else console.warn("save_self_assessment falhou:",await res.text());
-            }catch(e){console.warn("save_self_assessment erro:",e)}
+              else{
+                const failure=await res.json().catch(()=>({}));
+                const message=String(failure.message||"");
+                console.warn("save_self_assessment falhou:",message||failure);
+                if(/invalido|inválido|nao encontrada|não encontrada/i.test(message))saveError="Este link de autoavaliação não é mais válido. Solicite um novo link ao professor.";
+                else if(/ja foi enviada|já foi enviada|utilizad/i.test(message))saveError="Esta autoavaliação já foi enviada. Para responder novamente, solicite um novo link ao professor.";
+                else saveError="Não foi possível salvar sua avaliação agora. Tente novamente em alguns instantes.";
+              }
+            }catch(e){
+              console.warn("save_self_assessment erro:",e);
+              saveError="Sem comunicação com o servidor. Verifique sua internet e tente novamente.";
+            }
           }
           if(cfg.url&&cfg.anonKey&&!saved){
             btn.textContent="Tentar enviar novamente";btn.disabled=false;
-            toast("Não foi possível salvar. Verifique sua conexão e tente novamente.");
+            if(errorBox){errorBox.textContent=saveError;errorBox.classList.remove("hidden")}
+            toast(saveError);
             return;
           }
           // Salva localmente também como fallback
