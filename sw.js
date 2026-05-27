@@ -1,4 +1,4 @@
-const CACHE = 'beachflow-v9-relatorio-aluno';
+const CACHE = 'beachflow-v12-motor-ux-mobile';
 const BASE = '/btflow';
 const ASSETS = [
   BASE + '/',
