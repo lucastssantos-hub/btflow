@@ -267,12 +267,13 @@
       if(!supabaseClient) return s.id;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return s.id;
+      syncPushStudent.lastError="";
       const {data, error} = await supabaseClient.from("students").upsert({
         id: s.id, teacher_id: user.id,
         name: s.name, phone: s.phone||null,
         level: s.level||"iniciante"
       },{onConflict:"id"}).select("id").single();
-      if(error){ console.warn("pushStudent falhou:", error.message); setSyncStatus("error","Aluno salvo apenas neste aparelho. Tente sincronizar novamente."); return false; }
+      if(error){ syncPushStudent.lastError=error.message||""; console.warn("pushStudent falhou:", error.message); setSyncStatus("error","Aluno salvo apenas neste aparelho. Tente sincronizar novamente."); return false; }
       setSyncStatus("ok","Aluno salvo no Supabase.");
       return data.id;
     }
@@ -632,12 +633,26 @@
     function selfAssessLink(sid,token=selfAssessToken(sid)){const st=student(sid),base=location.origin+location.pathname,name=encodeURIComponent(st?.name||"Aluno"),level=encodeURIComponent(st?.level||"intermediario");return base+"?bf_self="+token+"&bf_student="+name+"&bf_level="+level}
     function selfAssessMessage(sid,link){const st=student(sid);return"Oi, "+firstName(st?.name)+"! 🎾\n\nQuero entender como você se sente em cada fundamento do beach tennis para personalizar os seus treinos.\n\nEssa autoavaliação leva 2 minutos e vai guiar tudo que vamos trabalhar juntos a partir de agora — drills, foco técnico e evolução no radar.\n\nToque no link abaixo:\n"+link}
     async function prepareSelfAssessMessage(sid){
+      const st=student(sid);
+      if(!st)throw new Error("Não encontrei o aluno selecionado.");
       const token=selfAssessToken(sid),link=selfAssessLink(sid,token);
       if(supabaseClient){
         const {data:{user}}=await supabaseClient.auth.getUser();
         if(!user)throw new Error("Entre novamente na conta antes de enviar autoavaliações.");
+        const syncedStudentId=await syncPushStudent(st);
+        if(!syncedStudentId){
+          const cause=String(syncPushStudent.lastError||"");
+          if(/uuid|invalid input syntax/i.test(cause))throw new Error("Este aluno tem um cadastro antigo incompatível com a sincronização. Será necessário atualizar o cadastro antes de enviar o link.");
+          throw new Error("Não consegui sincronizar os dados deste aluno. Toque em Tentar sincronizar e envie o link novamente.");
+        }
         const {error}=await supabaseClient.rpc("register_self_assess_token",{p_student_id:sid,p_token:token,p_teacher_id:user.id});
-        if(error){console.warn("register_self_assess_token falhou:",error.message);throw new Error("Não consegui sincronizar este link. Execute a migração de persistência e tente novamente.")}
+        if(error){
+          const cause=String(error.message||"");
+          console.warn("register_self_assess_token falhou:",cause);
+          if(/Aluno nao pertence|Aluno não pertence/i.test(cause))throw new Error("Este aluno não está vinculado à sua conta no Supabase. Sincronize os alunos e tente novamente.");
+          if(/register_self_assess_token|schema cache|function/i.test(cause))throw new Error("A função de autoavaliação ainda não está disponível no Supabase. Execute a migração de persistência e tente novamente.");
+          throw new Error(`Não consegui registrar o link: ${cause||"erro no Supabase"}.`);
+        }
         setSyncStatus("ok","Link de autoavaliação salvo no Supabase.");
       }
       await trackUsage("self_assessment_link_ready",{student_id:sid});
