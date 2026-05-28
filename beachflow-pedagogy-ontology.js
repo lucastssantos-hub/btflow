@@ -1,207 +1,283 @@
 (function (root) {
   "use strict";
 
-  const learningStages = [
-    { key: "aquisicao", label: "Aquisição" },
-    { key: "estabilizacao", label: "Estabilização" },
-    { key: "transferencia", label: "Transferência" },
-    { key: "pressao", label: "Pressão" }
+  const phases = [
+    ["serve", "Saque"],
+    ["return", "Devolucao"],
+    ["rally_entry", "Entrada no Rally"],
+    ["development", "Desenvolvimento"],
+    ["conversion", "Conversao"]
+  ];
+
+  const actions = [
+    ["serve", "Saque"],
+    ["lob", "Lob"],
+    ["smash", "Smash"],
+    ["hook", "Gancho"],
+    ["volley", "Voleio"],
+    ["short_ball", "Bola curta"],
+    ["acceleration", "Aceleracao"],
+    ["defense", "Defesa"],
+    ["counter_lob", "Contra-lob"],
+    ["return", "Devolucao"]
+  ];
+
+  const results = [
+    ["point_won", "Ponto ganho"],
+    ["continuity", "Continuidade"],
+    ["forced_error", "Erro forcado"],
+    ["unforced_error", "Erro nao forcado"],
+    ["ball_given", "Bola entregue"],
+    ["pressure_generated", "Pressao gerada"]
+  ];
+
+  const optionalContexts = [
+    ["low_ball", "Bola baixa"],
+    ["no_displacement", "Sem deslocamento"],
+    ["after_lob", "Apos lob"],
+    ["lateral_run", "Corrida lateral"],
+    ["high_pressure", "Pressao alta"],
+    ["balanced_opponent", "Adversario equilibrado"],
+    ["short_ball", "Bola curta"]
   ];
 
   const executionDimensions = [
     { key: "timing", label: "Timing" },
     { key: "base", label: "Base" },
     { key: "contact", label: "Contato" },
-    { key: "direction", label: "Direção" },
-    { key: "balance", label: "Equilíbrio" }
+    { key: "direction", label: "Direcao" },
+    { key: "balance", label: "Equilibrio" }
   ];
 
-  const tree = {
-    key: "construction_finalization",
-    id: "tree_01",
-    title: "Construção vs Finalização",
-    version: "2.0.0",
-    contexts: [
-      ["disadvantage", "Desvantagem"],
-      ["neutral", "Neutro"],
-      ["advantage", "Vantagem"]
-    ],
-    decisions: [
-      ["recover", "Recuperou"],
-      ["construct", "Construiu"],
-      ["finish", "Finalizou"]
-    ],
-    outcomes: [
-      ["success", "Funcionou"],
-      ["error", "Erro"]
-    ],
-    ideal: { disadvantage: "recover", neutral: "construct", advantage: "finish" },
-    cases: {
-      "disadvantage:recover": {
-        ok: true,
-        feedback: "Boa leitura. Primeiro reorganizar, depois voltar a construir.",
-        focus: "Recuperar para voltar a construir.",
-        observe: "Se recupera base e cobertura antes de arriscar.",
-        dynamic: "Bola profunda inicial; bônus ao recuperar o centro antes do rali livre.",
-        question: "Após recuperar, qual bola liberou a construção?",
-        progression: "Aumentar velocidade da segunda bola."
-      },
-      "disadvantage:construct": {
-        ok: false,
-        feedback: "Tentou construir ainda em pressão. Primeiro precisa recuperar tempo e posição.",
-        focus: "Recuperar antes de construir.",
-        observe: "Se tenta direcionar a bola ainda desequilibrado.",
-        dynamic: "Iniciar em pressão; só liberar construção após lob ou gancho com recuperação.",
-        question: "Você já havia recuperado o ponto?",
-        progression: "Variar a bola de recuperação."
-      },
-      "disadvantage:finish": {
-        ok: false,
-        feedback: "Está acelerando sem vantagem. O problema não é o golpe - é a leitura da situação.",
-        focus: "Recuperar antes de acelerar.",
-        observe: "Se tenta definir ainda recuado ou desequilibrado.",
-        dynamic: "Em desvantagem, ponto bônus por ganhar tempo e reorganizar.",
-        question: "Essa bola pedia ataque ou sobrevivência?",
-        progression: "Liberar pressão somente após recuperar a zona neutra."
-      },
-      "neutral:recover": {
-        ok: false,
-        feedback: "Excesso de segurança no neutro. Havia espaço para construir vantagem.",
-        focus: "Assumir a construção.",
-        observe: "Se devolve margem sem tentar criar desconforto.",
-        dynamic: "Rali neutro; bônus ao direcionar uma bola que abra espaço antes do ataque.",
-        question: "Qual opção criava vantagem sem arriscar demais?",
-        progression: "Diminuir o alvo de construção."
-      },
-      "neutral:construct": {
-        ok: true,
-        feedback: "Boa decisão. Manteve o ponto vivo e preparou a próxima bola.",
-        focus: "Construir a bola de ataque.",
-        observe: "Se cria vantagem sem antecipar a finalização.",
-        dynamic: "Ponto bônus quando constrói antes de acelerar.",
-        question: "Qual sinal mostrou que o ponto ficou ofensivo?",
-        progression: "Depois da construção, liberar uma bola vulnerável."
-      },
-      "neutral:finish": {
-        ok: false,
-        feedback: "Finalização precoce. O aluno tentou ganhar o ponto antes de construir vantagem.",
-        focus: "Construir antes de acelerar.",
-        observe: "Se tenta winner em bola ainda neutra.",
-        dynamic: "Finalização só pontua depois de uma ação de construção.",
-        question: "O que faltou criar antes de acelerar?",
-        progression: "Variar altura da bola neutra."
-      },
-      "advantage:recover": {
-        ok: false,
-        feedback: "Excesso de segurança. O aluno evitou assumir a vantagem.",
-        focus: "Reconhecer e assumir a vantagem.",
-        observe: "Se recua ou neutraliza quando a bola permite pressão.",
-        dynamic: "Bola vulnerável; bônus por pressionar com equilíbrio e recuperar cobertura.",
-        question: "Qual sinal liberava a pressão?",
-        progression: "Reduzir o tempo disponível na bola ofensiva."
-      },
-      "advantage:construct": {
-        ok: false,
-        feedback: "Tinha chance de pressionar, mas manteve o ponto neutro.",
-        focus: "Converter vantagem em pressão.",
-        observe: "Se prolonga a construção mesmo com bola favorável.",
-        dynamic: "Bola verde controlada; bônus ao pressionar sem perder base.",
-        question: "A construção ainda era necessária?",
-        progression: "Alternar bola para pressão e bola para controle."
-      },
-      "advantage:finish": {
-        ok: true,
-        feedback: "Boa decisão. O aluno reconheceu a chance de pressionar.",
-        focus: "Finalizar com equilíbrio.",
-        observe: "Se acelera apenas na bola vulnerável e cobre a resposta.",
-        dynamic: "Bola em vantagem; bônus por finalizar e recompor posição.",
-        question: "O que tornou esta bola finalizável?",
-        progression: "Variar direção da bola favorável."
-      }
+  const canonicalProblems = [
+    {
+      phase: "development",
+      observed_action: "smash",
+      observed_result: "unforced_error",
+      inferred_behavior: "Conversao precipitada",
+      pedagogical_goal: "Criar vantagem antes de acelerar.",
+      initial_format: "Semiaberto",
+      observable_criteria: "O aluno so acelera quando a bola deixa o adversario deslocado ou atrasado.",
+      regression: "Modo fechado: bola alta controlada e alvo grande antes de liberar ponto.",
+      progression: "Rally livre com smash permitido apenas apos deslocamento adversario.",
+      bonus_rule: "+1 ponto apenas se a finalizacao vier depois de vantagem criada.",
+      dynamic: "Rally livre com aceleracao permitida somente apos bola curta ou adversario deslocado.",
+      teacher_focus: "Observar se a aceleracao nasce de oportunidade ou ansiedade.",
+      decision_quality: "incorrect"
+    },
+    {
+      phase: "rally_entry",
+      observed_action: "return",
+      observed_result: "ball_given",
+      inferred_behavior: "Falha na reorganizacao pos-devolucao",
+      pedagogical_goal: "Devolver e recuperar base antes da terceira bola.",
+      initial_format: "Fechado",
+      observable_criteria: "Depois da devolucao, a dupla fecha o centro e recupera profundidade.",
+      regression: "Devolucao profunda sem ponto; professor cobra recuperacao de base.",
+      progression: "Devolucao + terceira bola viva com pontuacao.",
+      bonus_rule: "+1 ponto se a devolucao entrar funda e a dupla recuperar posicao.",
+      dynamic: "Devolucao obrigatoria seguida de cobertura do centro antes do rally livre.",
+      teacher_focus: "Observar se a devolucao termina a acao ou organiza a proxima bola.",
+      decision_quality: "incorrect"
+    },
+    {
+      phase: "development",
+      observed_action: "lob",
+      observed_result: "continuity",
+      inferred_behavior: "Defesa sem transicao para controle",
+      pedagogical_goal: "Ganhar tempo e transformar defesa em controle.",
+      initial_format: "Semiaberto",
+      observable_criteria: "Apos o lob, a dupla avanca ou reorganiza sem entregar a bola seguinte.",
+      regression: "Lob profundo com recuperacao marcada por cones.",
+      progression: "Lob + bola neutra + decisao livre.",
+      bonus_rule: "+1 ponto quando o lob gera tempo e a dupla recupera centro.",
+      dynamic: "Comecar em pressao; lob profundo so vale se houver recuperacao de base.",
+      teacher_focus: "Observar se o lob so sobrevive ou se devolve controle ao ponto.",
+      decision_quality: "correct"
+    },
+    {
+      phase: "conversion",
+      observed_action: "smash",
+      observed_result: "continuity",
+      inferred_behavior: "Tentativa de definicao sem vantagem consolidada",
+      pedagogical_goal: "Finalizar somente quando a vantagem estiver clara.",
+      initial_format: "Aberto",
+      observable_criteria: "A dupla reconhece bola verde antes de tentar definir.",
+      regression: "Professor alterna bola verde e bola neutra; aluno precisa chamar a decisao antes de bater.",
+      progression: "Ponto aberto com bonus apenas para finalizacao contextual.",
+      bonus_rule: "+1 ponto se a dupla nomear a bola certa antes de finalizar.",
+      dynamic: "Jogo condicionado: finalizacao antecipada nao recebe bonus.",
+      teacher_focus: "Observar se o aluno define por leitura ou por habito.",
+      decision_quality: "incorrect"
+    },
+    {
+      phase: "development",
+      observed_action: "acceleration",
+      observed_result: "unforced_error",
+      inferred_behavior: "Aceleracao em desvantagem",
+      pedagogical_goal: "Neutralizar antes de acelerar.",
+      initial_format: "Fechado",
+      observable_criteria: "Em bola baixa ou corrida lateral, o aluno escolhe margem antes de potencia.",
+      regression: "Sequencia fixa: defesa com margem, recuperacao, bola de construcao.",
+      progression: "Liberar aceleracao apenas na terceira bola da sequencia.",
+      bonus_rule: "+1 ponto quando evita acelerar bola baixa ou desequilibrada.",
+      dynamic: "Professor mistura bola baixa e bola vulneravel; aluno so acelera a vulneravel.",
+      teacher_focus: "Observar se a aceleracao aparece com base ou em fuga.",
+      decision_quality: "incorrect"
+    },
+    {
+      phase: "development",
+      observed_action: "short_ball",
+      observed_result: "pressure_generated",
+      inferred_behavior: "Construcao curta eficiente",
+      pedagogical_goal: "Usar a curta para tirar conforto antes de atacar.",
+      initial_format: "Aberto",
+      observable_criteria: "A curta desloca o adversario e a dupla ocupa o espaco seguinte.",
+      regression: "Curta com alvo largo e recuperacao obrigatoria.",
+      progression: "Curta + interceptacao ou pressao na bola seguinte.",
+      bonus_rule: "+1 ponto se a curta gerar deslocamento antes da pressao.",
+      dynamic: "Rally livre; bonus quando a curta cria a bola de ataque.",
+      teacher_focus: "Observar se a curta e uma construcao ou uma bola entregue.",
+      decision_quality: "correct"
+    },
+    {
+      phase: "return",
+      observed_action: "return",
+      observed_result: "pressure_generated",
+      inferred_behavior: "Devolucao que quebra a terceira bola",
+      pedagogical_goal: "Devolver com profundidade e preparar cobertura.",
+      initial_format: "Aberto",
+      observable_criteria: "A devolucao tira tempo e a dupla protege o centro.",
+      regression: "Devolucao profunda sem pressa de atacar.",
+      progression: "Devolucao profunda + terceira bola viva.",
+      bonus_rule: "+1 ponto se a devolucao reduzir a qualidade da terceira bola.",
+      dynamic: "Game iniciado pelo saque; bonus para devolucao profunda com cobertura.",
+      teacher_focus: "Observar se a devolucao so entra ou se organiza a dupla.",
+      decision_quality: "correct"
+    },
+    {
+      phase: "serve",
+      observed_action: "serve",
+      observed_result: "pressure_generated",
+      inferred_behavior: "Saque preparando terceira bola",
+      pedagogical_goal: "Servir para manipular a devolucao.",
+      initial_format: "Semiaberto",
+      observable_criteria: "O saque gera devolucao previsivel e a dupla prepara a terceira bola.",
+      regression: "Saque com alvo grande e recuperacao obrigatoria.",
+      progression: "Saque + terceira bola com ponto vivo.",
+      bonus_rule: "+1 ponto se o saque preparar a terceira bola, nao apenas entrar.",
+      dynamic: "Saque no alvo combinado e terceira bola jogada com intencao.",
+      teacher_focus: "Observar se o saque cria contexto ou apenas inicia o ponto.",
+      decision_quality: "correct"
+    },
+    {
+      phase: "conversion",
+      observed_action: "smash",
+      observed_result: "point_won",
+      inferred_behavior: "Conversao bem reconhecida",
+      pedagogical_goal: "Manter finalizacao com equilibrio e cobertura.",
+      initial_format: "Aberto",
+      observable_criteria: "Depois de definir, a dupla ainda cobre possivel resposta.",
+      regression: "Bola verde controlada com alvo amplo.",
+      progression: "Ponto aberto com placar e consequencia.",
+      bonus_rule: "+1 ponto se a finalizacao vier com recuperacao de cobertura.",
+      dynamic: "Jogo livre; bonus quando a bola verde e convertida sem perder organizacao.",
+      teacher_focus: "Observar se a finalizacao fecha o ponto sem desorganizar a dupla.",
+      decision_quality: "correct"
+    },
+    {
+      phase: "development",
+      observed_action: "defense",
+      observed_result: "ball_given",
+      inferred_behavior: "Perda de iniciativa apos defesa",
+      pedagogical_goal: "Defender com profundidade para voltar ao ponto.",
+      initial_format: "Fechado",
+      observable_criteria: "A defesa passa a rede com margem e compra tempo para recuperar.",
+      regression: "Defesa alta profunda com recuperacao marcada.",
+      progression: "Defesa + bola neutra + rally livre.",
+      bonus_rule: "+1 ponto se a defesa gerar tempo real de recuperacao.",
+      dynamic: "Comecar pressionado; ponto so abre depois da defesa profunda.",
+      teacher_focus: "Observar se a defesa entrega o ponto ou reorganiza a dupla.",
+      decision_quality: "incorrect"
     }
-  };
+  ];
 
-  function countMatching(history, predicate) {
-    return (history || []).filter(predicate).length;
+  function findExact(input) {
+    return canonicalProblems.find(function (row) {
+      return row.phase === input.phase &&
+        row.observed_action === input.action &&
+        row.observed_result === input.result;
+    });
   }
 
-  function stageFor(rule, outcome, history, context, decision) {
-    const repeatedReadingErrors = countMatching(history, function (item) {
-      return item.context === context && item.decision === decision && item.ok === false;
-    });
-    const repeatedCorrectSuccess = countMatching(history, function (item) {
-      return item.context === context && item.decision === decision &&
-        item.ok === true && item.outcome === "success";
-    });
-    if (!rule.ok) {
-      return {
-        key: "aquisicao",
-        label: "Aquisição",
-        trigger: repeatedReadingErrors >= 2
-          ? "Leitura incoerente recorrente. Regressão sugerida."
-          : "Primeiro ajustar a leitura da situação.",
-        adjustment: repeatedReadingErrors >= 2
-          ? "Regredir para exercício fechado com contexto fixo."
-          : "Repetir a situação com regra simples."
-      };
-    }
-    if (outcome === "error") {
-      return {
-        key: "estabilizacao",
-        label: "Estabilização",
-        trigger: "Decisão correta, resultado com erro.",
-        adjustment: "Manter a decisão e estabilizar a execução."
-      };
-    }
-    if (outcome === "success" && repeatedCorrectSuccess >= 2) {
-      return {
-        key: "pressao",
-        label: "Pressão",
-        trigger: "Decisão correta repetida com resultado positivo.",
-        adjustment: "Validar sob placar e pressão de tempo."
-      };
-    }
-    return {
-      key: "transferencia",
-      label: "Transferência",
-      trigger: "Decisão coerente aplicada com resultado positivo.",
-      adjustment: "Levar a escolha para jogo condicionado."
-    };
+  function findFallback(input) {
+    return canonicalProblems.find(function (row) {
+      return row.phase === input.phase &&
+        row.observed_action === input.action;
+    }) || canonicalProblems.find(function (row) {
+      return row.observed_action === input.action &&
+        row.observed_result === input.result;
+    }) || canonicalProblems[0];
   }
 
-  function evaluate(input) {
+  function confidenceFor(exact, input, history) {
+    const samePattern = (history || []).filter(function (item) {
+      return item.phase === input.phase &&
+        item.action === input.action &&
+        item.result === input.result;
+    }).length;
+    return Math.min(0.95, (exact ? 0.74 : 0.56) + Math.min(0.18, samePattern * 0.04));
+  }
+
+  function evaluateExpress(input) {
     const data = input || {};
-    const rule = tree.cases[data.context + ":" + data.decision];
-    if (!rule) return null;
-    const outcome = data.outcome || "";
-    const dimension = executionDimensions.find(function (item) {
-      return item.key === data.executionIssue;
+    if (!data.phase || !data.action || !data.result) return null;
+    const exact = findExact(data);
+    const row = exact || findFallback(data);
+    const correctDecision = row.decision_quality === "correct";
+    const executionOnly = correctDecision && data.result === "unforced_error";
+    return Object.assign({}, row, {
+      exact_match: Boolean(exact),
+      point_phase: data.phase,
+      observed_action: data.action,
+      observed_result: data.result,
+      optional_context: data.context || "",
+      confidence: confidenceFor(Boolean(exact), data, data.history),
+      correctDecision: correctDecision,
+      needsExecutionCheck: executionOnly,
+      objective: row.pedagogical_goal,
+      bonusRule: row.bonus_rule,
+      dynamic: row.dynamic,
+      teacherFocus: executionOnly
+        ? "Boa leitura primeiro. Depois observar a execucao tecnica que quebrou a acao."
+        : row.teacher_focus,
+      studentPositive: correctDecision
+        ? "Voce reconheceu bem a situacao em alguns momentos."
+        : "Voce compete e tenta resolver o ponto.",
+      studentLimiter: correctDecision
+        ? "O limite principal agora esta na execucao da escolha."
+        : row.pedagogical_goal,
+      studentNextFocus: row.observable_criteria
     });
-    const stage = outcome ? stageFor(rule, outcome, data.history, data.context, data.decision) : null;
-    const technicalError = rule.ok && outcome === "error";
-    return Object.assign({}, rule, {
-      treeId: tree.key,
-      treeTitle: tree.title,
-      context: data.context,
-      decision: data.decision,
-      outcome: outcome,
-      idealDecision: tree.ideal[data.context],
-      stage: stage,
-      needsExecutionCheck: technicalError,
-      executionLabel: dimension ? dimension.label : "",
-      diagnostic: technicalError
-        ? "A decisão foi correta. Agora o foco é execução."
-        : rule.feedback,
-      executionFeedback: technicalError && dimension
-        ? "Foco de execução: " + dimension.label + "."
-        : ""
-    });
+  }
+
+  function studentFeedback(result) {
+    if (!result) return "";
+    return [
+      "O que faz bem: " + result.studentPositive,
+      "Principal limitador: " + result.studentLimiter,
+      "Foco da proxima aula: " + result.studentNextFocus
+    ].join("\n\n");
   }
 
   root.BEACHFLOW_PEDAGOGY_ONTOLOGY = {
-    learningStages: learningStages,
+    phases: phases,
+    actions: actions,
+    results: results,
+    optionalContexts: optionalContexts,
+    canonicalProblems: canonicalProblems,
     executionDimensions: executionDimensions,
-    trees: { construction_finalization: tree },
-    evaluate: evaluate
+    evaluateExpress: evaluateExpress,
+    studentFeedback: studentFeedback
   };
 })(typeof window !== "undefined" ? window : globalThis);
