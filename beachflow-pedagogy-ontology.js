@@ -229,6 +229,44 @@
     return Math.min(0.95, (exact ? 0.74 : 0.56) + Math.min(0.18, samePattern * 0.04));
   }
 
+  function shortFocus(row) {
+    const text = (row.pedagogical_goal || "").replace(/\.$/, "");
+    const map = {
+      "Conversao precipitada": "Nao acelerar cedo.",
+      "Tentativa de definicao sem vantagem consolidada": "Definir so na bola clara.",
+      "Aceleracao em desvantagem": "Neutralizar antes de acelerar.",
+      "Falha na reorganizacao pos-devolucao": "Devolver e recuperar.",
+      "Defesa sem transicao para controle": "Lob para recuperar o ponto.",
+      "Perda de iniciativa apos defesa": "Defender com profundidade."
+    };
+    return map[row.inferred_behavior] || text + ".";
+  }
+
+  function shortRule(row) {
+    const map = {
+      "Conversao precipitada": "Winner cedo perde ponto.",
+      "Tentativa de definicao sem vantagem consolidada": "So define apos deslocar.",
+      "Aceleracao em desvantagem": "Bola baixa pede margem.",
+      "Falha na reorganizacao pos-devolucao": "Devolveu, fechou o centro.",
+      "Defesa sem transicao para controle": "Lob so vale com recuperacao.",
+      "Perda de iniciativa apos defesa": "Defesa curta perde bonus.",
+      "Construcao curta eficiente": "Curta boa precisa ocupar.",
+      "Devolucao que quebra a terceira bola": "Devolucao funda vale bonus.",
+      "Saque preparando terceira bola": "Saque bom prepara a proxima.",
+      "Conversao bem reconhecida": "Finalizou, recompôs."
+    };
+    return map[row.inferred_behavior] || (row.bonus_rule || "").replace(/^\+1 ponto\s*/i, "").replace(/\.$/, "") + ".";
+  }
+
+  function shortWatch(row) {
+    const text = row.teacher_focus || "";
+    if (text.length <= 70) return text;
+    if (row.inferred_behavior === "Conversao precipitada") return "Observar se acelera por oportunidade ou ansiedade.";
+    if (row.inferred_behavior === "Aceleracao em desvantagem") return "Observar se acelera com base ou em fuga.";
+    if (row.inferred_behavior === "Falha na reorganizacao pos-devolucao") return "Observar se recupera base apos devolver.";
+    return "Observar se a escolha aparece no contexto certo.";
+  }
+
   function evaluateExpress(input) {
     const data = input || {};
     if (!data.phase || !data.action || !data.result) return null;
@@ -245,6 +283,9 @@
       confidence: confidenceFor(Boolean(exact), data, data.history),
       correctDecision: correctDecision,
       needsExecutionCheck: executionOnly,
+      microFocus: shortFocus(row),
+      microRule: shortRule(row),
+      microWatch: shortWatch(row),
       objective: row.pedagogical_goal,
       bonusRule: row.bonus_rule,
       dynamic: row.dynamic,
