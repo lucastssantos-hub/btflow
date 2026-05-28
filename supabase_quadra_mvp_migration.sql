@@ -64,6 +64,61 @@ on conflict (point_phase, observed_action, observed_result) do update set
   teacher_focus=excluded.teacher_focus,
   decision_quality=excluded.decision_quality;
 
+-- Backfill dos scouts ja existentes.
+-- Traduz registros antigos (technique/outcome/zone/intention) para a nova camada operacional.
+update public.scout_points
+set
+  observed_action = coalesce(observed_action, case
+    when coalesce(technique, shot, '') ilike '%saque%' then 'serve'
+    when coalesce(technique, shot, '') ilike '%devolu%' then 'return'
+    when coalesce(technique, shot, '') ilike '%lob%' then 'lob'
+    when coalesce(technique, shot, '') ilike '%smash%' then 'smash'
+    when coalesce(technique, shot, '') ilike '%gancho%' then 'hook'
+    when coalesce(technique, shot, '') ilike '%voleio%' then 'volley'
+    when coalesce(technique, shot, '') ilike '%curta%' then 'short_ball'
+    when coalesce(technique, shot, '') ilike '%aceler%' then 'acceleration'
+    when coalesce(technique, shot, '') ilike '%ventaglio%' then 'acceleration'
+    when coalesce(technique, shot, '') ilike '%anôm%' then 'acceleration'
+    when coalesce(technique, shot, '') ilike '%anom%' then 'acceleration'
+    when coalesce(technique, shot, '') ilike '%tapa%' then 'acceleration'
+    when coalesce(technique, shot, '') ilike '%defesa%' then 'defense'
+    else 'defense'
+  end),
+  observed_result = coalesce(observed_result, case
+    when coalesce(outcome, '') ilike '%winner%' then 'point_won'
+    when coalesce(outcome, '') ilike '%ace%' then 'point_won'
+    when coalesce(outcome, '') ilike '%forçou%' then 'pressure_generated'
+    when coalesce(outcome, '') ilike '%forcou%' then 'pressure_generated'
+    when coalesce(outcome, '') ilike '%erro%' then 'unforced_error'
+    else 'continuity'
+  end),
+  optional_context = coalesce(optional_context, case
+    when coalesce(zone, '') ilike '%vermelha%' then 'high_pressure'
+    when coalesce(zone, '') ilike '%verde%' then 'short_ball'
+    else null
+  end),
+  point_phase = coalesce(point_phase, case
+    when coalesce(technique, shot, '') ilike '%saque%' then 'serve'
+    when coalesce(technique, shot, '') ilike '%devolu%' then 'return'
+    when coalesce(inferred_intention, '') ilike '%final%' then 'conversion'
+    when coalesce(inferred_intention, '') ilike '%prepara%' then 'rally_entry'
+    when coalesce(inferred_intention, '') ilike '%neut%' then 'rally_entry'
+    else 'development'
+  end),
+  confidence = coalesce(confidence, 0.58)
+where point_phase is null
+   or observed_action is null
+   or observed_result is null
+   or confidence is null;
+
+update public.scout_points sp
+set inferred_behavior = coalesce(sp.inferred_behavior, cp.inferred_behavior)
+from public.canonical_problems cp
+where sp.point_phase = cp.point_phase
+  and sp.observed_action = cp.observed_action
+  and sp.observed_result = cp.observed_result
+  and sp.inferred_behavior is null;
+
 alter table public.canonical_problems enable row level security;
 
 drop policy if exists "canonical_problems_read" on public.canonical_problems;
