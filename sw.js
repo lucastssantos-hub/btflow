@@ -1,4 +1,4 @@
-const CACHE = 'beachflow-v15-scout-expresso';
+const CACHE = 'beachflow-v16-quadra-mvp';
 const asset = path => new URL(path, self.registration.scope).toString();
 const ASSETS = [
   asset('./'),
