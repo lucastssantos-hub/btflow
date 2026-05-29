@@ -1,4 +1,4 @@
-const CACHE = 'beachflow-v16-quadra-mvp';
+const CACHE = 'beachflow-v17-cause-engine';
 const asset = path => new URL(path, self.registration.scope).toString();
 const ASSETS = [
   asset('./'),
@@ -6,6 +6,7 @@ const ASSETS = [
   asset('./confirmacao-aula.html'),
   asset('./supabase-config.js'),
   asset('./beachflow-pedagogy-ontology.js'),
+  asset('./beachflow-diagnostic-cause-engine.js'),
   asset('./manifest.webmanifest'),
   asset('./icons/icon-192.png'),
   asset('./icons/icon-512.png')
