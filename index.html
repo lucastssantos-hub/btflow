@@ -1479,6 +1479,23 @@ ${markdownPlan(pl,ctx).replace(/^# PLANO DE TREINAMENTO:[^\n]*\n/,"")}`;
     function cycleHeaderHtml(cycle){
       return`<div class="callout"><p class="eyebrow" style="color:var(--primary)">Ciclo IA ativo</p><h3 class="display" style="font-size:1.08rem;margin:.35rem 0">${esc(cycle.theme)}</h3><p class="muted" style="line-height:1.45"><strong>${esc(cycle.status)}</strong><br>${esc(cycle.status_note)}<br>Duração: ${cycle.duration} semana(s) · Aula atual: semana ${cycle.current_week}/${cycle.duration}</p></div><div class="callout"><strong>Progressão do ciclo</strong>${cycle.weeks.map((w,i)=>`<p class="muted" style="line-height:1.4;margin:.42rem 0"><strong>Semana ${i+1}${i+1===cycle.current_week?" · atual":""}:</strong> ${esc(w.title)} - ${esc(w.goal)}</p>`).join("")}<p class="muted" style="line-height:1.45;margin-top:.6rem"><strong>Validação:</strong> scout curto ao final do ciclo; uma observação durante o ciclo não altera o foco automaticamente.</p></div>`;
     }
+    function cyclePocket(cycle){
+      const theme=String(cycle?.theme||""),focus=cycle?.focus||"Consistência",week=cycle?.weeks?.[Math.max(0,(cycle.current_week||1)-1)]?.goal||"Aplicar o tema em situação real.";
+      if(theme.includes("Recuperar antes de acelerar"))return{focus:"Recuperar antes de acelerar.",rule:"Atacar só depois de reorganizar.",dynamic:"Começar pressionado: lob/gancho profundo, fechar centro e só depois liberar aceleração.",watch:"Observar quem tenta acelerar ainda desequilibrado."};
+      if(theme.includes("Criar vantagem antes de definir"))return{focus:"Criar vantagem antes de definir.",rule:"Winner cedo perde bônus.",dynamic:"Rali livre com definição liberada apenas após deslocar o adversário ou receber bola favorável.",watch:"Observar se a definição nasce da chance real ou da pressa."};
+      if(focus==="Saque")return{focus:"Saque para preparar a terceira bola.",rule:"Ace não é o objetivo principal.",dynamic:"Saque no alvo, leitura da devolução e primeira bola profunda com recuperação da dupla.",watch:"Observar se o saque gera uma terceira bola melhor."};
+      if(focus==="Backhand")return{focus:"Backhand para controlar o ponto.",rule:"Backhand constrói; não força bola baixa.",dynamic:"Backhand com margem e profundidade. Se vier bola favorável, usar ventaglio/anômala ou controle.",watch:"Observar se o aluno recupera base depois do contato."};
+      if(focus==="Tapa")return{focus:"Acelerar só com vantagem.",rule:"Tapa só no forehand alto.",dynamic:"Bola média-alta no forehand libera tapa; backhand usa ventaglio/anômala ou controle.",watch:"Observar se o aluno tenta acelerar bola baixa ou atrasada."};
+      if(focus==="Devolução")return{focus:"Entrar no ponto sem entregar a terceira bola.",rule:"Devolveu, fechou o centro.",dynamic:"Devolução profunda com recuperação. Ponto libera quando a dupla neutraliza a terceira bola.",watch:"Observar se a devolução dá tempo para organizar."};
+      return{focus:theme||`Melhorar ${focus}.`,rule:"Primeiro organizar, depois acelerar.",dynamic:week,watch:"Observar escolha da bola, recuperação e cobertura da dupla."};
+    }
+    function cyclePocketHtml(cycle){
+      const p=cyclePocket(cycle),full=cycle.markdown||cycleMarkdown(cycle);
+      return`<div class="focus-card featured"><p class="eyebrow" style="color:var(--primary)">Aula de hoje · semana ${cycle.current_week}/${cycle.duration}</p><div class="focus-line"><span class="eyebrow">Foco</span><h3 class="display" style="font-size:1.18rem;margin:0">${esc(p.focus)}</h3></div><div class="focus-line"><span class="eyebrow">Regra</span><p><strong>${esc(p.rule)}</strong></p></div><div class="focus-line"><span class="eyebrow">Dinâmica</span><p>${esc(p.dynamic)}</p></div><div class="focus-line"><span class="eyebrow">Observar</span><p>${esc(p.watch)}</p></div></div><details class="callout"><summary class="muted" style="font-weight:900">Ver ciclo completo</summary>${cycleHeaderHtml(cycle)}<div id="plano-ia-conteudo" class="callout plano-ia-completo" style="margin-top:.7rem">${markdownToHtml(full)}</div></details><div id="planEditBox" class="form hidden"><textarea id="planEditor" class="textarea" style="min-height:22rem">${esc(full)}</textarea><div class="grid2"><button class="btn primary" id="savePlanEdit">Salvar edição</button><button class="btn ghost" id="cancelPlanEdit">Cancelar</button></div></div>`;
+    }
+    function cycleSupportPanelHtml(materials,diagnosticHtml,scoutImpactHtml,durationControl){
+      return`<details class="callout"><summary style="font-weight:900">Base, diagnóstico e materiais</summary><div class="form" style="margin-top:.75rem">${durationControl}${diagnosticHtml}${scoutImpactHtml}${materials}</div></details>`;
+    }
     async function saveCycleRemote(classId,cycle,markdown=""){
       if(!supabaseClient)return;
       const {data:{user}}=await supabaseClient.auth.getUser();
@@ -1863,6 +1880,44 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       if(!scoutDiagnosisConfirmed(events,reading))return null;
       return{nota_media_radar:displayScore(sid,focus).score||0,transicao_quebrada_scout:reading.transition,scout_validado:true,erros_frequentes:`Scout individual validado: ${reading.diagnosis}. Direção: ${reading.training}`};
     }
+    function studentPracticalScoutText(reading,weakest,events,validated){
+      const diagnosis=String(reading?.diagnosis||"").toLowerCase(),training=String(reading?.training||"").toLowerCase();
+      const base=validated?"Esse padrão apareceu mais de uma vez no jogo.":"A amostra ainda é pequena, então vamos usar isso como hipótese de quadra.";
+      if(diagnosis.includes("neutro")){
+        return{
+          observed:`${base} Na prática, você consegue manter a bola em jogo, mas muitas bolas voltam sem incomodar o adversário. A troca continua viva, porém sem criar vantagem clara.`,
+          focus:`Na próxima aula, o foco será transformar uma bola segura em uma bola mais difícil: mais profundidade, melhor direção e recuperação da base depois do golpe.`
+        };
+      }
+      if(diagnosis.includes("construção")||training.includes("desequil")){
+        return{
+          observed:`${base} Você tenta preparar o ponto, mas ainda falta fazer o adversário sair da posição confortável antes de acelerar.`,
+          focus:`Na próxima aula, o foco será construir melhor a bola: empurrar, tirar espaço ou variar antes de tentar definir.`
+        };
+      }
+      if(diagnosis.includes("pressão")||diagnosis.includes("aceler")){
+        return{
+          observed:`${base} Você tenta acelerar algumas bolas, mas nem sempre a bola estava pronta para isso. O erro aparece mais pela escolha do momento do que só pelo golpe.`,
+          focus:`Na próxima aula, o foco será reconhecer a bola certa para acelerar e recuperar a posição depois da ação.`
+        };
+      }
+      if(diagnosis.includes("defesa")||diagnosis.includes("reconstru")){
+        return{
+          observed:`${base} Quando fica pressionado, você até consegue devolver algumas bolas, mas ainda nem sempre ganha tempo suficiente para reorganizar a dupla.`,
+          focus:`Na próxima aula, o foco será sair da pressão com mais margem e voltar para uma posição estável antes de atacar.`
+        };
+      }
+      if(diagnosis.includes("final")){
+        return{
+          observed:`${base} Você procura definir o ponto, mas algumas tentativas aparecem antes da vantagem estar clara.`,
+          focus:`Na próxima aula, o foco será criar a bola certa antes de finalizar.`
+        };
+      }
+      return{
+        observed:`${base} O Scout mostrou situações ligadas a ${weakest}, mas ainda precisamos validar em quadra qual erro mais se repete: escolha da bola, execução ou recuperação.`,
+        focus:`Na próxima aula, vamos observar ${weakest} em jogo real e escolher um ajuste simples para repetir.`
+      };
+    }
     function studentScoutReport(sid){
       const st=student(sid),auto=scores(sid,"student_blind"),rated=fundamentals.filter(f=>auto[f]>0);
       if(!rated.length)return{ready:false,reason:"Receba a autoavaliação do aluno antes de gerar o relatório."};
@@ -1870,11 +1925,11 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       if(!events.length)return{ready:false,reason:"Registre ações do aluno no Scout antes de gerar o relatório."};
       const weakest=rated.reduce((a,b)=>auto[b]<auto[a]?b:a,rated[0]),strongest=rated.reduce((a,b)=>auto[b]>auto[a]?b:a,rated[0]);
       const reading=semanticScope(events),validated=scoutDiagnosisConfirmed(events,reading);
-      const evidence=validated?`O padrão já apareceu de forma repetida no jogo: ${reading.diagnosis}.`:`A amostra ainda é inicial, mas observamos: ${reading.diagnosis}.`;
+      const practical=studentPracticalScoutText(reading,weakest,events,validated);
       const diag=studentCauseDiagnosis(sid);
       const positive=diag?.studentPositive||`Você demonstra confiança em ${strongest} (${scoreText(auto[strongest])}/10).`;
-      const limiter=diag?.studentLimiter||`${evidence} Vamos confirmar se isso vem da escolha da bola, da recuperação ou da execução.`;
-      const next=diag?.studentNextFocus||`Vamos observar ${weakest} em situações reais e confirmar qual ajuste transfere melhor para o jogo.`;
+      const limiter=diag?.studentLimiter?`${diag.studentLimiter} ${practical.observed}`:practical.observed;
+      const next=diag?.studentNextFocus||practical.focus;
       const message=`Oi, ${firstName(st?.name)}! Segue sua devolutiva BeachFlow.\n\nO QUE VOCÊ FAZ BEM\n${positive}\n\nPRINCIPAL LIMITADOR\n${limiter}\n\nFOCO DA PRÓXIMA AULA\n${next}\n\nSua autoavaliação mostra como você se percebe. O Scout mostra como suas escolhas aparecem no jogo. Vamos cruzar os dois para evoluir com mais clareza.`;
       return{ready:true,message,reading,events,validated,weakest,strongest,diag};
     }
@@ -2100,15 +2155,16 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
         const scoutImpactHtml=ids.length?classScoutImpactHtml(ids,aiContext):"";
         const current=state.cycles[id]||null,duration=current?.duration||2;
         const durationControl=`<label class="label">Duração do ciclo<select id="cycleDuration" class="select"><option value="1" ${duration===1?"selected":""}>1 semana</option><option value="2" ${duration===2?"selected":""}>2 semanas · recomendado</option><option value="3" ${duration===3?"selected":""}>3 semanas</option><option value="4" ${duration===4?"selected":""}>4 semanas</option></select></label>`;
+        const supportPanel=cycleSupportPanelHtml(materials,diagnosticHtml,scoutImpactHtml,durationControl);
         if(!ids.length||!hasTeacherRadar(ids)){
-          aiPane.innerHTML=`${materials}${diagnosticHtml}${scoutImpactHtml}${durationControl}<div class="empty">Ainda não há alunos avaliados nesta turma. Cadastre alunos, matricule na turma e salve uma avaliação do professor ou autoavaliação para liberar o ciclo.</div><div class="grid2"><button class="btn ghost" data-demo-ia="amarelo">Simular Amarelo</button><button class="btn ghost" data-demo-ia="verde">Simular Verde</button><button class="btn ghost" data-demo-ia="azul">Simular Azul</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div><div id="plano-ia-conteudo"></div>`;
+          aiPane.innerHTML=`${supportPanel}<div class="empty">Ainda não há alunos avaliados nesta turma. Cadastre alunos, matricule na turma e salve uma avaliação do professor ou autoavaliação para liberar o ciclo.</div><details class="callout"><summary style="font-weight:900">Simulações</summary><div class="grid2" style="margin-top:.7rem"><button class="btn ghost" data-demo-ia="amarelo">Simular Amarelo</button><button class="btn ghost" data-demo-ia="verde">Simular Verde</button><button class="btn ghost" data-demo-ia="azul">Simular Azul</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div></details><div id="plano-ia-conteudo"></div>`;
           wireAiMaterials();
           aiPane.querySelectorAll("[data-demo-ia]").forEach(b=>b.onclick=()=>{if(b.dataset.demoIa==="clear")return renderCycle();simularTreinoIA(b.dataset.demoIa,document.getElementById("plano-ia-conteudo"),Number(document.getElementById("cycleDuration").value));toast("Simulação de ciclo gerada.")});
           return;
         }
         const emptyCycle=`<div class="callout"><strong>Nenhum ciclo ativo.</strong><p class="muted" style="line-height:1.45;margin:.45rem 0 0">Escolha a duração e gere um ciclo. O primeiro treino nasce do radar técnico; o Scout final valida se houve transferência para o jogo.</p></div>`;
-        const content=current?`${cycleHeaderHtml(current)}<div id="plano-ia-conteudo" class="callout plano-ia-completo">${markdownToHtml(current.markdown||cycleMarkdown(current))}</div><div id="planEditBox" class="form hidden"><textarea id="planEditor" class="textarea" style="min-height:22rem">${esc(current.markdown||cycleMarkdown(current))}</textarea><div class="grid2"><button class="btn primary" id="savePlanEdit">Salvar edição</button><button class="btn ghost" id="cancelPlanEdit">Cancelar</button></div></div>`:`<div id="plano-ia-conteudo">${emptyCycle}</div>`;
-        aiPane.innerHTML=`${materials}${diagnosticHtml}${scoutImpactHtml}${durationControl}${content}<div class="grid2"><button class="btn ghost" data-demo-ia="amarelo">Simular Amarelo</button><button class="btn ghost" data-demo-ia="verde">Simular Verde</button><button class="btn ghost" data-demo-ia="azul">Simular Azul</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div><button class="btn primary" id="llmPlan">Gerar ciclo com IA</button><button class="btn outline" id="regenPlan">Gerar ciclo local</button>${current?`<div class="grid2"><button class="btn outline" id="prevWeek">Semana anterior</button><button class="btn outline" id="nextWeek">Próxima semana</button></div><button class="btn outline" id="editPlan">Editar ciclo</button><button class="btn outline" id="zapClass">Enviar aula atual no WhatsApp</button>`:""}`;
+        const content=current?cyclePocketHtml(current):`<div id="plano-ia-conteudo">${emptyCycle}</div>`;
+        aiPane.innerHTML=`${current?content+supportPanel:supportPanel+content}${current?`<div class="grid2"><button class="btn outline" id="prevWeek">Semana anterior</button><button class="btn outline" id="nextWeek">Próxima semana</button></div><button class="btn primary" id="zapClass">Enviar aula atual no WhatsApp</button>`:""}<details class="callout"><summary style="font-weight:900">Gerar, simular ou editar</summary><div class="form" style="margin-top:.75rem"><div class="grid2"><button class="btn ghost" data-demo-ia="amarelo">Simular Amarelo</button><button class="btn ghost" data-demo-ia="verde">Simular Verde</button><button class="btn ghost" data-demo-ia="azul">Simular Azul</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div><button class="btn primary" id="llmPlan">Gerar ciclo com IA</button><button class="btn outline" id="regenPlan">Gerar ciclo local</button>${current?`<button class="btn outline" id="editPlan">Editar ciclo</button>`:""}</div></details>`;
         wireAiMaterials();
         aiPane.querySelectorAll("[data-demo-ia]").forEach(b=>b.onclick=()=>{if(b.dataset.demoIa==="clear")return renderCycle();simularTreinoIA(b.dataset.demoIa,document.getElementById("plano-ia-conteudo"),Number(document.getElementById("cycleDuration").value));toast("Simulação de ciclo gerada.")});
         regenPlan.onclick=async()=>{const baseCtx=prepararContextoIALocal(s.id);if(!baseCtx)return toast("Não encontrei dados para gerar o ciclo.");const ctx={...baseCtx,cycle_duration:Number(document.getElementById("cycleDuration").value)},cycle=buildCycle(ctx,ctx.cycle_duration,id);state.cycles[id]=cycle;save();await saveCycleRemote(id,cycle,cycleMarkdown(cycle));renderCycle();toast("Ciclo criado com a turma matriculada completa.")};
