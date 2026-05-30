@@ -846,9 +846,10 @@
     function weightedClassScores(ids){
       const r={};
       fundamentals.forEach(f=>{
+        // Base por aluno: avaliação do professor tem prioridade sobre a autoavaliação (mesma lógica do painel "Avaliação da turma").
         const t=ids.map(sid=>latestEvalScore(sid,f,"teacher")).filter(v=>v!=null);
-        const b=ids.map(sid=>latestEvalScore(sid,f,"student_blind")).filter(v=>v!=null);
-        const base=t.length?t.reduce((a,c)=>a+c,0)/t.length:(b.length?b.reduce((a,c)=>a+c,0)/b.length:null);
+        const baseVals=ids.map(sid=>{const tv=latestEvalScore(sid,f,"teacher");return tv!=null?tv:latestEvalScore(sid,f,"student_blind");}).filter(v=>v!=null);
+        const base=baseVals.length?baseVals.reduce((a,c)=>a+c,0)/baseVals.length:null;
         const sc=scoutEffectiveness(ids,f);
         let val=null,src="";
         // Média Ponderada = Nota_Professor * 0.7 + Scout_Efetividade * 0.3 (avaliação técnica tem prioridade)
@@ -1324,7 +1325,21 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
       const semanticRadar=semantic?Object.entries(semantic.radar).filter(([,v])=>v!=null).map(([key,value])=>`${key} ${value.toFixed(1)}`).join(", "):"sem ações contextuais";
       const diagTurma=classAiDiagnosis(ids,{erros_frequentes:scoutMsg});
       const scoutValidated=scoutDiagnosisConfirmed(contextualEvents,semantic);
-      return enrichManualContext({nivel:c?.level||student(ids[0])?.level||"intermediario",fundamento_critico_radar:friendlyFund[critical[0]]||critical[0],fundamento_app:appFund[critical[0]]||"Consistência",nota_media_radar:(critical[1]||5).toFixed(1),erros_frequentes:scoutMsg,diagnostico_turma:diagTurma.text,confianca_radar:diagTurma.confidence,fonte_radar:diagTurma.source,top_gaps_radar:diagTurma.topGaps.map(x=>`${x.fundamental} ${x.score.toFixed(1)}`).join(", "),radar_comportamental_scout:semanticRadar,transicao_quebrada_scout:scoutValidated?semantic.transition:"hipótese a validar ao final do ciclo",perfil_scout:semantic?.profile||"sem dados",observacoes_alunos:`Escopo do ciclo: ${planningScope}. Confirmações atuais: ${confirmedIds.length}/${ids.length}. Fonte do radar: ${radarSource}.${gapMsg?" Gaps de percepção: "+gapMsg+".":""} Diagnóstico da turma: ${diagTurma.text} Evitar sobrecarga articular repetitiva se houver histórico de dores.${missing.length?` Fundamentos sem nota consolidada receberam 5.0 automaticamente: ${missing.join(", ")}.`:""}`,materiais_complementares:state.aiMaterials||"",aprendizado_compartilhado:localSharedKnowledge(),alunos_confirmados:confirmedIds,alunos_considerados:ids,scout_erros:errors.length,scout_winners:winners,zona_critica:zone||"",scout_amostra:contextualEvents.length,scout_validado:scoutValidated});
+      // UNIFICAÇÃO DO GAP: o treino usa o MESMO gap do card "Plano de Aula" (gerarPlanoDeAula), em vez de um cálculo paralelo.
+      const planoGap=gerarPlanoDeAula(ids);
+      const gapApp=planoGap.focus||appFund[critical[0]]||"Consistência";
+      const gapFriendly=planoGap.focus||friendlyFund[critical[0]]||critical[0];
+      const gapScore=planoGap.scores?.[planoGap.focus]?.score;
+      const topGapsTxt=planoGap.topGaps.length?planoGap.topGaps.map(g=>`${g.fundamental} ${g.score.toFixed(1)}`).join(", "):diagTurma.topGaps.map(x=>`${x.fundamental} ${x.score.toFixed(1)}`).join(", ");
+      // O Scout só redireciona o tema do ciclo quando a transição combina com a FAMÍLIA do gap técnico; senão fica como leitura secundária.
+      const offensiveGaps=["Smash","Tapa","Bandeja"],defensiveGaps=["Lob","Gancho","Devolução","Consistência","Backhand"];
+      // Espelha exatamente os gatilhos do cycleTheme: "Finalização" = ofensivo; "Defesa/Reconstrução" = defensivo.
+      const trans=semantic?semantic.transition||"":"";
+      const tFin=trans.includes("Finalização");
+      const tRec=trans.includes("Defesa/Reconstrução");
+      const scoutAligned=(tFin&&offensiveGaps.includes(gapApp))||(tRec&&defensiveGaps.includes(gapApp));
+      const transicaoCiclo=(scoutValidated&&scoutAligned)?semantic.transition:"hipótese a validar ao final do ciclo";
+      return enrichManualContext({nivel:c?.level||student(ids[0])?.level||"intermediario",fundamento_critico_radar:gapFriendly,fundamento_app:gapApp,nota_media_radar:(gapScore!=null?gapScore:(critical[1]||5)).toFixed(1),erros_frequentes:scoutMsg,diagnostico_turma:diagTurma.text,confianca_radar:diagTurma.confidence,fonte_radar:diagTurma.source,top_gaps_radar:topGapsTxt,radar_comportamental_scout:semanticRadar,transicao_quebrada_scout:transicaoCiclo,leitura_scout:semantic?semantic.transition:"",perfil_scout:semantic?.profile||"sem dados",observacoes_alunos:`Escopo do ciclo: ${planningScope}. Confirmações atuais: ${confirmedIds.length}/${ids.length}. Fonte do radar: ${radarSource}.${gapMsg?" Gaps de percepção: "+gapMsg+".":""} Diagnóstico da turma: ${diagTurma.text} Evitar sobrecarga articular repetitiva se houver histórico de dores.${missing.length?` Fundamentos sem nota consolidada receberam 5.0 automaticamente: ${missing.join(", ")}.`:""}`,materiais_complementares:state.aiMaterials||"",aprendizado_compartilhado:localSharedKnowledge(),alunos_confirmados:confirmedIds,alunos_considerados:ids,scout_erros:errors.length,scout_winners:winners,zona_critica:zone||"",scout_amostra:contextualEvents.length,scout_validado:scoutValidated});
     }
     async function prepararContextoIA(classSessionId){
       if(!supabaseClient)return prepararContextoIALocal(classSessionId);
@@ -1914,7 +1929,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
         scoutResumo:ctx.erros_frequentes||"sem scout relevante",
         autoavaliacaoResumo:ctx.fonte_radar||"sem fonte",
         gapPrincipal:ctx.fundamento_app||ctx.fundamento_critico_radar,
-        causaProvavel:ctx.transicao_quebrada_scout||cycleTheme(ctx).title,
+        causaProvavel:(ctx.transicao_quebrada_scout&&!ctx.transicao_quebrada_scout.includes("hipótese"))?ctx.transicao_quebrada_scout:cycleTheme(ctx).title,
         confiancaDiagnostico:ctx.scout_validado?"alta":(ctx.confianca_radar||"baixa")
       };
       // BLOQUEIO: diagnóstico precisa ser específico (gap + causa + turma).
