@@ -8,6 +8,8 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js"></script>
+  <script src="./beachflow-pedagogy-ontology.js"></script>
+  <script src="./beachflow-diagnostic-cause-engine.js"></script>
   <style>
     :root{
       color-scheme:dark;--bg:oklch(0.16 0.02 250);--fg:oklch(0.97 0.01 240);--card:oklch(0.21 0.025 250);--primary:oklch(0.86 0.22 145);--accent:oklch(0.78 0.18 220);--secondary:oklch(0.27 0.03 250);--muted:oklch(0.7 0.02 250);--border:oklch(0.30 0.03 250);--warn:oklch(0.83 0.18 75);--danger:oklch(0.65 0.24 25);--radius:.875rem;font-family:Inter,ui-sans-serif,system-ui,sans-serif
@@ -22,7 +24,7 @@
     .login{min-height:100vh;display:grid;place-items:center;padding:1.5rem}.login-card{width:min(100%,28rem);padding:1.1rem}.mark{width:4rem;height:4rem;margin:0 auto 1rem;border-radius:1.25rem;display:grid;place-items:center;color:var(--primary);font-size:2rem;border:1px solid color-mix(in oklch,var(--primary) 44%,transparent);box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--primary) 30%,transparent)}.segment{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;padding:.35rem;border-radius:999px;background:var(--secondary)}.segment button{min-height:2.65rem;border-radius:999px;background:transparent;color:var(--muted);font-weight:900}.segment button.active{background:var(--primary);color:#071018}
     .modal{position:fixed;inset:0;z-index:40;display:none;align-items:end;justify-content:center;padding:1rem;background:rgba(3,8,14,.76);backdrop-filter:blur(14px)}.modal.open{display:flex}.modal-card{width:min(100%,28rem);max-height:90vh;overflow:auto;border:1px solid var(--border);border-radius:1rem;background:var(--card);padding:1rem}.toast{position:fixed;top:1rem;left:50%;z-index:60;width:min(calc(100vw - 2rem),28rem);transform:translateX(-50%) translateY(-.7rem);opacity:0;pointer-events:none;transition:.18s;border:1px solid color-mix(in oklch,var(--primary) 35%,transparent);border-radius:.9rem;background:var(--card);padding:.8rem 1rem;font-weight:850}.toast.show{opacity:1;transform:translateX(-50%)}
     .choice{min-height:3.1rem;border:1px solid var(--border);border-radius:.85rem;background:color-mix(in oklch,var(--secondary) 25%,transparent);color:var(--fg);font-weight:850}.choice.sel{border-color:var(--primary);background:color-mix(in oklch,var(--primary) 16%,transparent);color:var(--primary)}.score-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:.8rem;padding:.65rem 0;border-bottom:1px solid var(--border)}.score-row:last-child{border-bottom:0}.score{font-family:"Space Grotesk",Inter;font-size:1.25rem;font-weight:900;font-variant-numeric:tabular-nums}.event{border:1px solid var(--border);border-radius:.9rem;background:color-mix(in oklch,var(--secondary) 28%,transparent);padding:.75rem}.slider{display:grid;gap:.4rem}.slider div{display:flex;justify-content:space-between;font-weight:850}input[type=range]{width:100%;accent-color:var(--primary)}
-    .quick3{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem}.quick3 .choice{min-height:3.25rem;padding:.65rem .25rem;font-size:.78rem}.focus-card{border:1px solid color-mix(in oklch,var(--primary) 36%,var(--border));border-radius:.9rem;padding:.9rem;background:color-mix(in oklch,var(--primary) 7%,var(--bg));display:grid;gap:.62rem}.focus-card h3{font-size:1.12rem;line-height:1.18}.focus-line{display:grid;gap:.18rem}.focus-line p{margin:0;font-size:.82rem;line-height:1.34}.inline-actions{display:flex;flex-wrap:wrap;gap:.45rem}.inline-actions .btn{flex:1;min-width:6.3rem}.bf-completo{margin-top:.85rem;border:1px solid var(--border);border-radius:.9rem;background:color-mix(in oklch,var(--secondary) 30%,transparent)}.bf-completo>summary{cursor:pointer;padding:.85rem 1rem;font-weight:850;color:var(--primary);list-style:none}.bf-completo>summary::-webkit-details-marker{display:none}.bf-completo[open]>summary{border-bottom:1px solid var(--border)}.bf-completo>.form{padding:.25rem 1rem 1rem}
+    .quick3{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem}.quick3 .choice{min-height:3.55rem;padding:.65rem .25rem;font-size:.78rem}.action-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.45rem}.phase-tabs{display:flex;gap:.35rem;overflow:auto;padding-bottom:.1rem}.phase-tabs .choice{min-width:6.6rem;min-height:2.45rem;padding:.45rem;font-size:.7rem}.context-strip{display:flex;gap:.35rem;overflow:auto;padding-bottom:.1rem}.context-strip .choice{min-width:max-content;min-height:2.35rem;padding:.45rem .65rem;font-size:.68rem}.express-step{display:grid;gap:.45rem}.express-step+.express-step{margin-top:.1rem}.express-summary{display:flex;flex-wrap:wrap;gap:.35rem}.focus-card{border:1px solid color-mix(in oklch,var(--primary) 36%,var(--border));border-radius:.9rem;padding:.9rem;background:color-mix(in oklch,var(--primary) 7%,var(--bg));display:grid;gap:.62rem}.focus-card.featured{border-color:color-mix(in oklch,var(--primary) 66%,var(--border));box-shadow:0 0 1.4rem color-mix(in oklch,var(--primary) 14%,transparent);padding:1rem}.focus-card h3{font-size:1.12rem;line-height:1.18}.focus-card.featured h3{font-size:1.26rem}.focus-line{display:grid;gap:.18rem}.focus-line p{margin:0;font-size:.82rem;line-height:1.34}.inline-actions{display:flex;flex-wrap:wrap;gap:.45rem}.inline-actions .btn{flex:1;min-width:6.3rem}.bf-completo{margin-top:.85rem;border:1px solid var(--border);border-radius:.9rem;background:color-mix(in oklch,var(--secondary) 30%,transparent)}.bf-completo>summary{cursor:pointer;padding:.85rem 1rem;font-weight:850;color:var(--primary);list-style:none}.bf-completo>summary::-webkit-details-marker{display:none}.bf-completo[open]>summary{border-bottom:1px solid var(--border)}.bf-completo>.form{padding:.25rem 1rem 1rem}.ped-toast{position:fixed;left:50%;top:1rem;z-index:55;width:min(calc(100vw - 1.4rem),27rem);transform:translateX(-50%);border:1px solid color-mix(in oklch,var(--primary) 58%,var(--border));border-radius:1rem;background:color-mix(in oklch,var(--card) 96%,black);box-shadow:0 1rem 3rem rgba(0,0,0,.36);padding:.9rem;display:grid;gap:.45rem}.ped-toast p{margin:0;font-size:.82rem;line-height:1.34}.closed-mode{border-color:color-mix(in oklch,var(--warn) 46%,var(--border));background:color-mix(in oklch,var(--warn) 8%,var(--bg))}
     @media(max-width:390px){.brand{font-size:2rem}.stat strong{font-size:1.25rem}.class-card,.item{grid-template-columns:3.8rem 1fr auto}.btn{font-size:.76rem}}
   </style>
 </head>
@@ -70,6 +72,7 @@
           <div class="cta"><button class="btn primary" data-create="class">+ Turma</button><button class="btn ghost" data-create="student">+ Aluno</button><button class="btn outline" data-create="eval">Avaliar</button></div>
         </header>
         <section class="stats"><article class="card stat"><span>◴</span><strong id="stClasses" class="text-glow">0</strong><p>Turmas hoje</p></article><article class="card stat"><span>♙</span><strong id="stStudents">0</strong><p>Alunos</p></article><article class="card stat"><span>↗</span><strong id="stOcc">0%</strong><p>Ocupação</p></article></section>
+        <div id="syncBanner" class="callout hidden"></div>
         <section><div class="section-head"><h2>Agenda do dia</h2><button class="btn outline" data-create="class">+ turma</button></div><div id="agenda" class="list"></div></section>
         <section><div class="section-head"><h2>Ações rápidas</h2><button class="btn outline" data-create="ops">+ ação</button></div><div id="ops" class="list"></div></section>
       </section>
@@ -92,7 +95,7 @@
         <header class="title-row"><div><p class="eyebrow">Partida, pontos e análise</p><h1 class="display brand">Scout<span style="color:var(--accent)">.</span></h1></div><span class="badge cyan">Ao vivo</span></header>
         <section id="pedagogicalMotor" class="card pad form"></section>
         <section class="stats"><article class="card stat"><span>◉</span><strong id="scReg" class="text-glow">0</strong><p>Ações hoje</p></article><article class="card stat"><span>↗</span><strong id="scGames">0</strong><p>Games partida</p></article><article class="card stat"><span>⌖</span><strong id="scPts">--</strong><p>Pontos partida</p></article></section>
-        <section id="scoutSetup" class="card pad form"><div class="section-head"><h2 style="color:var(--fg);font-size:1rem;letter-spacing:0;text-transform:none">Criar partida</h2><span class="badge cyan">Scout V8</span></div><label class="label">Turma<select id="scoutClass" class="select"></select></label><label class="label">Título<input id="matchTitle" class="field" value="Partida ao vivo"></label><div class="grid2"><label class="label">Tipo de jogo<select id="scoutGameType" class="select"><option value="doubles">Duplas</option><option value="singles">Simples</option></select></label><label class="label">Formato<select id="scoutMode" class="select"><option value="lesson4">Aula até 4 games</option><option value="lesson6">Aula até 6 games</option><option value="competition6">Set profissional</option><option value="pro3">Melhor de 3 sets</option></select></label></div><div class="grid2"><label id="scoutA1Label" class="label">Jogador A1<select id="a1" class="select"></select></label><label id="scoutA2Label" class="label">Jogador A2<select id="a2" class="select"></select></label><label id="scoutB1Label" class="label">Jogador B1<select id="b1" class="select"></select></label><label id="scoutB2Label" class="label">Jogador B2<select id="b2" class="select"></select></label></div><div class="callout"><strong>Registro contextual</strong><p class="muted" style="line-height:1.45;margin:.4rem 0 0">Registre vencedor, desfecho e técnica de cada ponto. A inteligência roda em segundo plano: o diagnóstico e o plano aparecem prontos na aba da turma.</p></div><button id="createMatch" class="btn primary">Iniciar scout</button></section>
+        <section id="scoutSetup" class="card pad form"><div class="section-head"><h2 style="color:var(--fg);font-size:1rem;letter-spacing:0;text-transform:none">Criar partida</h2><span class="badge cyan">Scout V8</span></div><label class="label">Turma<select id="scoutClass" class="select"></select></label><label class="label">Título<input id="matchTitle" class="field" value="Partida ao vivo"></label><div class="grid2"><label class="label">Tipo de jogo<select id="scoutGameType" class="select"><option value="doubles">Duplas</option><option value="singles">Simples</option></select></label><label class="label">Formato<select id="scoutMode" class="select"><option value="lesson4">Aula até 4 games</option><option value="lesson6">Aula até 6 games</option><option value="competition6">Set profissional</option><option value="pro3">Melhor de 3 sets</option></select></label></div><div class="grid2"><label id="scoutA1Label" class="label">Jogador A1<select id="a1" class="select"></select></label><label id="scoutA2Label" class="label">Jogador A2<select id="a2" class="select"></select></label><label id="scoutB1Label" class="label">Jogador B1<select id="b1" class="select"></select></label><label id="scoutB2Label" class="label">Jogador B2<select id="b2" class="select"></select></label></div><div class="callout"><strong>Registro contextual</strong><p class="muted" style="line-height:1.45;margin:.4rem 0 0">Registre vencedor, desfecho e técnica. O BeachFlow infere intenção, transição quebrada e direção do próximo treino.</p></div><button id="createMatch" class="btn primary">Iniciar scout</button></section>
         <section id="scoutMatch" class="hidden"></section>
         <section id="scoutHistory" class="card pad hidden" style="margin-top:.75rem"></section>
       </section>
@@ -115,7 +118,7 @@
   <div id="toast" class="toast">Tudo certo.</div>
 
   <script>
-    const KEY="beachflow_publicar_v2",ACCOUNT_PREFIX="beachflow_account_v2_",PLAN_TEMPLATE_VERSION="cycle-contextual-v9",GOAL=18000,today=new Date(),weekday=today.getDay();
+    const KEY="beachflow_publicar_v2",ACCOUNT_PREFIX="beachflow_account_v2_",PLAN_TEMPLATE_VERSION="cycle-contextual-v10",GOAL=18000,today=new Date(),weekday=today.getDay();
     const SUPA_CFG=window.BEACHFLOW_SUPABASE||{};
     const supabaseClient=SUPA_CFG.url&&SUPA_CFG.anonKey&&window.supabase?window.supabase.createClient(SUPA_CFG.url,SUPA_CFG.anonKey):null;
     const AI_CFG=window.BEACHFLOW_AI||{};
@@ -166,7 +169,7 @@
         // Puxa avaliações
         const {data:evals} = await supabaseClient
           .from("evaluations").select("*").eq("teacher_id", user.id)
-          .order("created_at",{ascending:false}).limit(2000);
+          .order("created_at",{ascending:true}).limit(2000);
         if(evals?.length){
           state.evals = evals.map(e=>({
             id:e.id, student_id:e.student_id,
@@ -240,7 +243,7 @@
         // Recupera o ciclo ativo mais recente de cada turma sem exigir nova tabela.
         const {data:cycleRows} = await supabaseClient
           .from("ai_drills").select("class_id,payload_json,created_at")
-          .eq("teacher_id",user.id).eq("knowledge_version","cycle-contextual-v9")
+          .eq("teacher_id",user.id).eq("knowledge_version",PLAN_TEMPLATE_VERSION)
           .order("created_at",{ascending:false}).limit(100);
         state.cycles=state.cycles||{};
         (cycleRows||[]).forEach(row=>{
@@ -252,10 +255,12 @@
 
         // Normaliza e salva localmente
         state = normalizeState(state);
+        setSyncStatus("ok","Dados sincronizados neste aparelho.");
         save();
         return true;
       }catch(err){
         console.warn("syncPull falhou:", err);
+        setSyncStatus("error","Sem sincronização com o banco. Seus dados novos podem não aparecer em outro aparelho.");
         return false;
       }
     }
@@ -264,12 +269,14 @@
       if(!supabaseClient) return s.id;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return s.id;
+      syncPushStudent.lastError="";
       const {data, error} = await supabaseClient.from("students").upsert({
         id: s.id, teacher_id: user.id,
         name: s.name, phone: s.phone||null,
         level: s.level||"iniciante"
       },{onConflict:"id"}).select("id").single();
-      if(error){ console.warn("pushStudent falhou:", error.message); return s.id; }
+      if(error){ syncPushStudent.lastError=error.message||""; console.warn("pushStudent falhou:", error.message); setSyncStatus("error","Aluno salvo apenas neste aparelho. Tente sincronizar novamente."); return false; }
+      setSyncStatus("ok","Aluno salvo no Supabase.");
       return data.id;
     }
 
@@ -284,7 +291,8 @@
         capacity: +c.capacity||4,
         focus_fundamental: c.focus||null
       },{onConflict:"id"}).select("id").single();
-      if(error){ console.warn("pushClass falhou:", error.message); return c.id; }
+      if(error){ console.warn("pushClass falhou:", error.message); setSyncStatus("error","Turma salva apenas neste aparelho. Tente sincronizar novamente."); return false; }
+      setSyncStatus("ok","Turma salva no Supabase.");
       return data.id;
     }
 
@@ -292,9 +300,11 @@
       if(!supabaseClient) return;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
-      await supabaseClient.from("class_enrollments").upsert({
+      const {error}=await supabaseClient.from("class_enrollments").upsert({
         teacher_id: user.id, class_id: classId, student_id: studentId
       },{onConflict:"class_id,student_id"});
+      if(error){setSyncStatus("error","Matrícula pendente de sincronização.");return false}
+      return true;
     }
     async function syncDeleteEnrollment(classId, studentId){
       if(!supabaseClient||!classId||!studentId) return;
@@ -307,22 +317,26 @@
       if(!supabaseClient) return;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
-      await supabaseClient.from("evaluations").upsert({
+      const {error}=await supabaseClient.from("evaluations").upsert({
         id: e.id, teacher_id: user.id, student_id: e.student_id,
         evaluator: e.evaluator||"teacher",
         fundamental: e.fundamental, score: +e.score
       },{onConflict:"id"});
+      if(error){setSyncStatus("error","Avaliação pendente de sincronização.");return false}
+      return true;
     }
 
     async function syncPushPayment(p){
       if(!supabaseClient) return;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
-      await supabaseClient.from("payments").upsert({
+      const {error}=await supabaseClient.from("payments").upsert({
         id: p.id, teacher_id: user.id, student_id: p.student_id,
         amount: +p.amount, due_date: p.due||iso(),
         status: p.status||"pendente", pix_code: p.pix||null
       },{onConflict:"id"});
+      if(error){setSyncStatus("error","Pagamento pendente de sincronização.");return false}
+      return true;
     }
 
     const isDbId=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||""));
@@ -345,12 +359,15 @@
         ["team_a_names","team_b_names","score_mode","ended","ended_at"].forEach(k=>delete compatible[k]);
         ({error}=await supabaseClient.from("scout_matches").upsert(compatible,{onConflict:"id"}));
       }
-      if(error)console.warn("pushScoutMatch falhou:",error.message);
+      if(error){console.warn("pushScoutMatch falhou:",error.message);setSyncStatus("error","Scout salvo no aparelho, mas pendente no Supabase.");return false}
+      setSyncStatus("ok","Scout salvo no Supabase.");
+      return true;
     }
     async function syncPushScoutPoint(p,m){
       if(!supabaseClient||!p||!m||!isDbId(p.id)||!isDbId(m.id)) return;
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
+      const operational=operationalFromScoutPoint(p);
       const {error}=await supabaseClient.from("scout_points").upsert({
         id:p.id, teacher_id:user.id, match_id:m.id, server_id:p.server_id,
         finisher_id:p.final_player_id||null, final_player_id:p.final_player_id||null,
@@ -363,9 +380,16 @@
         games_before:p.games_before, games_after:p.games_after, sets_before:p.sets_before,
         sets_after:p.sets_after, is_deciding_point:p.is_deciding_point,
         is_tiebreak:p.is_tiebreak, is_super_tiebreak:p.is_super_tiebreak,
-        score_label:p.score_after
+        score_label:p.score_after,
+        point_phase:p.point_phase||operational.point_phase,
+        observed_action:p.observed_action||operational.observed_action,
+        observed_result:p.observed_result||operational.observed_result,
+        optional_context:p.optional_context||operational.optional_context,
+        inferred_behavior:p.inferred_behavior||operational.inferred_behavior,
+        confidence:p.confidence||operational.confidence
       },{onConflict:"id"});
-      if(error)console.warn("pushScoutPoint falhou:",error.message);
+      if(error){console.warn("pushScoutPoint falhou:",error.message);setSyncStatus("error","Ponto do Scout pendente de sincronização.");return false}
+      return true;
     }
     async function syncPushScoutEvent(e,m){
       if(!supabaseClient||!e||!isDbId(e.id)) return;
@@ -380,7 +404,8 @@
         zone:e.zone||null, is_deciding_point:!!e.is_deciding_point,
         is_tiebreak:!!e.is_tiebreak, is_super_tiebreak:!!e.is_super_tiebreak
       },{onConflict:"id"});
-      if(error)console.warn("pushScoutEvent falhou:",error.message);
+      if(error){console.warn("pushScoutEvent falhou:",error.message);setSyncStatus("error","Evento do Scout pendente de sincronização.");return false}
+      return true;
     }
 
     // Push completo de todos os dados locais para o Supabase
@@ -389,53 +414,59 @@
       const {data:{user}} = await supabaseClient.auth.getUser();
       if(!user) return;
       toast("Sincronizando dados...");
-      for(const s of state.students) await syncPushStudent(s);
-      for(const c of state.classes) await syncPushClass(c);
-      for(const e of state.enroll) await syncPushEnrollment(e.class_id, e.student_id);
-      for(const e of state.evals) await syncPushEval(e);
-      for(const p of state.payments) await syncPushPayment(p);
+      let ok=true;
+      for(const s of state.students) ok=(await syncPushStudent(s)!==false)&&ok;
+      for(const c of state.classes) ok=(await syncPushClass(c)!==false)&&ok;
+      for(const e of state.enroll) ok=(await syncPushEnrollment(e.class_id, e.student_id)!==false)&&ok;
+      for(const e of state.evals) ok=(await syncPushEval(e)!==false)&&ok;
+      for(const p of state.payments) ok=(await syncPushPayment(p)!==false)&&ok;
       if(state.match){
-        await syncPushScoutMatch(state.match);
-        for(const p of state.match.points||[]) await syncPushScoutPoint(p,state.match);
+        ok=(await syncPushScoutMatch(state.match)!==false)&&ok;
+        for(const p of state.match.points||[]) ok=(await syncPushScoutPoint(p,state.match)!==false)&&ok;
       }
-      for(const e of state.scout_events) await syncPushScoutEvent(e,state.match);
-      toast("Dados sincronizados com sucesso! ✅");
+      for(const e of state.scout_events) ok=(await syncPushScoutEvent(e,state.match)!==false)&&ok;
+      if(ok){setSyncStatus("ok","Dados sincronizados com o Supabase.");toast("Dados sincronizados com sucesso!")}
+      else toast("Há dados pendentes. Verifique conexão e Supabase.");
     }
     // ═══════════════════════════════════════════════════════════
     const fundamentals=["Saque","Devolução","Tapa","Bandeja","Smash","Forehand","Backhand","Lob","Gancho","Curta","Consistência","Posicionamento"];
     const drillMap={Saque:["Saque com intenção","Lançamento estável, direção clara e terceira bola organizada."],Devolução:["Devolução profunda","Neutralizar o saque, empurrar a dupla sacadora e reduzir a terceira bola adversária."],Tapa:["Tapa com contexto","Aceleração curta em bola vulnerável para tirar tempo sem virar smash forçado."],Bandeja:["Bandeja de continuidade","Controle ofensivo para manter vantagem, margem e ferradura organizada."],Smash:["Smash com preparação","Ajustar cedo, preparar raquete alta e finalizar sem perder base."],Forehand:["Forehand de controle","Contato à frente, ângulo e escolha de aceleração."],Backhand:["Backhand defensivo","Base firme, arco inferior/estático e recuperação de posição."],Lob:["Lob para ganhar tempo","Altura, profundidade e recuo coordenado da dupla."],Gancho:["Gancho de fundo","Bola alta no fundo respondida baixa ou em contra-lob, com equilíbrio no recuo."],Curta:["Curta + avanço","Toque leve, leitura da resposta e cobertura da rede."],"Consistência":["Rally com meta","Volume antes da velocidade e erro corrigido com repetição."],Posicionamento:["Elástico da dupla","Cobertura horizontal, meio protegido e ajuste após lob/curta."]};
-    const PEDAGOGICAL_TREES={
-      construction_finalization:{
-        id:"tree_01",title:"Construção vs Finalização",
-        contexts:[["disadvantage","Desvantagem"],["neutral","Neutro"],["advantage","Vantagem"]],
-        decisions:[["recover","Recuperou"],["construct","Construiu"],["finish","Finalizou"]],
-        ideal:{disadvantage:"recover",neutral:"construct",advantage:"finish"},
-        cases:{
-          "disadvantage:recover":{ok:true,feedback:"Boa leitura. Primeiro reorganizar, depois voltar a construir.",focus:"Recuperar para voltar a construir.",observe:"Se recupera base e cobertura antes de arriscar.",dynamic:"Bola profunda inicial; bônus ao recuperar o centro antes do rali livre.",question:"Após recuperar, qual bola liberou a construção?",progression:"Aumentar velocidade da segunda bola."},
-          "disadvantage:construct":{ok:false,feedback:"Tentou construir ainda em pressão. Primeiro precisa recuperar tempo e posição.",focus:"Recuperar antes de construir.",observe:"Se tenta direcionar a bola ainda desequilibrado.",dynamic:"Iniciar em pressão; só liberar construção após lob ou gancho com recuperação.",question:"Você já havia recuperado o ponto?",progression:"Variar a bola de recuperação."},
-          "disadvantage:finish":{ok:false,feedback:"Está acelerando sem vantagem. O problema não é o golpe - é a leitura da situação.",focus:"Recuperar antes de acelerar.",observe:"Se tenta definir ainda recuado ou desequilibrado.",dynamic:"Jogo condicionado: em desvantagem, ponto bônus por ganhar tempo e reorganizar.",question:"Essa bola pedia ataque ou sobrevivência?",progression:"Liberar pressão somente após recuperar a zona neutra."},
-          "neutral:recover":{ok:false,feedback:"Excesso de segurança no neutro. Havia espaço para construir vantagem.",focus:"Assumir a construção.",observe:"Se devolve margem sem tentar criar desconforto.",dynamic:"Rali neutro; bônus ao direcionar uma bola que abra espaço antes do ataque.",question:"Qual opção criava vantagem sem arriscar demais?",progression:"Diminuir o alvo de construção."},
-          "neutral:construct":{ok:true,feedback:"Boa decisão. Manteve o ponto vivo e preparou a próxima bola.",focus:"Construir a bola de ataque.",observe:"Se cria vantagem sem antecipar a finalização.",dynamic:"Jogo condicionado: ponto bônus quando constrói antes de acelerar.",question:"Qual sinal mostrou que o ponto ficou ofensivo?",progression:"Depois da construção, liberar uma bola vulnerável."},
-          "neutral:finish":{ok:false,feedback:"Finalização precoce. O aluno tentou ganhar o ponto antes de construir vantagem.",focus:"Construir antes de acelerar.",observe:"Se tenta winner em bola ainda neutra.",dynamic:"Rali iniciado neutro; finalização só pontua depois de uma ação de construção.",question:"O que faltou criar antes de acelerar?",progression:"Variar altura da bola neutra."},
-          "advantage:recover":{ok:false,feedback:"Excesso de segurança. O aluno evitou assumir a vantagem.",focus:"Reconhecer e assumir a vantagem.",observe:"Se recua ou neutraliza quando a bola permite pressão.",dynamic:"Entregar bola vulnerável; bônus por pressionar com equilíbrio e recuperar cobertura.",question:"Qual sinal liberava a pressão?",progression:"Reduzir o tempo disponível na bola ofensiva."},
-          "advantage:construct":{ok:false,feedback:"Tinha chance de pressionar, mas manteve o ponto neutro.",focus:"Converter vantagem em pressão.",observe:"Se prolonga a construção mesmo com bola favorável.",dynamic:"Bola verde controlada; ponto bônus ao pressionar sem perder base.",question:"A construção ainda era necessária?",progression:"Alternar bola para pressão e bola para controle."},
-          "advantage:finish":{ok:true,feedback:"Boa decisão. O aluno reconheceu a chance de pressionar.",focus:"Finalizar com equilíbrio.",observe:"Se acelera apenas na bola vulnerável e cobre a resposta.",dynamic:"Bola em vantagem; bônus por finalizar e recompor posição.",question:"O que tornou esta bola finalizável?",progression:"Variar direção da bola favorável."}
-        }
-      }
-    };
-    const TECHNICAL_EXECUTION_OPTIONS=[["timing","Timing"],["base","Base"],["contact","Contato"],["direction","Direção"],["balance","Equilíbrio"]];
-    function evaluatePedagogicalSituation(treeId,context,decision,executionIssue=""){
-      const tree=PEDAGOGICAL_TREES[treeId],rule=tree?.cases?.[`${context}:${decision}`];
-      if(!tree||!rule)return null;
-      const executionLabel=TECHNICAL_EXECUTION_OPTIONS.find(([id])=>id===executionIssue)?.[1]||"";
-      return{...rule,treeId,treeTitle:tree.title,context,decision,idealDecision:tree.ideal[context],executionLabel,executionFeedback:rule.ok&&executionLabel?`A decisão foi correta. Agora o foco é execução: ${executionLabel}.`:""};
+    const PEDAGOGY_ENGINE=window.BEACHFLOW_PEDAGOGY_ONTOLOGY;
+    const EXPRESS_PHASES=PEDAGOGY_ENGINE.phases;
+    const EXPRESS_ACTIONS=PEDAGOGY_ENGINE.actions;
+    const EXPRESS_RESULTS=PEDAGOGY_ENGINE.results;
+    const EXPRESS_CONTEXTS=PEDAGOGY_ENGINE.optionalContexts;
+    const TECHNICAL_EXECUTION_OPTIONS=PEDAGOGY_ENGINE.executionDimensions.map(x=>[x.key,x.label]);
+    function evaluatePedagogicalSituation(phase,action,result="",context=""){
+      return PEDAGOGY_ENGINE.evaluateExpress({phase,action,result,context,history:state.pedagogyHistory||[]});
     }
-    const uid=()=>Math.random().toString(36).slice(2,9),iso=(d=today)=>d.toISOString().slice(0,10),money=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])),firstName=n=>String(n||"Aluno").trim().split(/\s+/)[0]||"Aluno";
-    const seed=()=>({session:false,mode:"login",page:"today",selected:null,reveal:null,blind:{},draftPoint:{},pedagogy:{treeId:"construction_finalization",context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:false},teacherEmail:"",teacherName:"",aiMaterials:"",aiLearnings:[],scoutClassId:"",students:[],classes:[],enroll:[],sessions:[],attendance:[],makeups:[],evals:[],payments:[],ops:[],scout_events:[],scoutHistory:[],match:null,plans:[],cycles:{}});
+    function operationalFromScoutPoint(p){
+      const technique=String(p?.technique||p?.shot||"").toLowerCase(),outcome=String(p?.outcome||"").toLowerCase(),intent=String(p?.inferred_intention||"").toLowerCase(),zone=String(p?.zone||"").toLowerCase();
+      const action=technique.includes("saque")?"serve":technique.includes("devolu")?"return":technique.includes("lob")?"lob":technique.includes("smash")?"smash":technique.includes("gancho")?"hook":technique.includes("voleio")?"volley":technique.includes("curta")?"short_ball":(technique.includes("aceler")||technique.includes("ventaglio")||technique.includes("anôm")||technique.includes("anom")||technique.includes("tapa"))?"acceleration":technique.includes("defesa")?"defense":"defense";
+      const phase=action==="serve"?"serve":action==="return"?"return":intent.includes("final")?"conversion":intent.includes("prepara")||intent.includes("neut")?"rally_entry":"development";
+      const result=outcome.includes("winner")||outcome.includes("ace")?"point_won":outcome.includes("forçou")||outcome.includes("forcou")?"pressure_generated":outcome.includes("erro")?"unforced_error":"continuity";
+      const context=zone.includes("vermelha")?"high_pressure":zone.includes("verde")?"short_ball":"";
+      const inference=evaluatePedagogicalSituation(phase,action,result,context);
+      return{point_phase:phase,observed_action:action,observed_result:result,optional_context:context,inferred_behavior:inference?.inferred_behavior||"",confidence:inference?.confidence||0.56};
+    }
+    const uid=()=>Math.random().toString(36).slice(2,9),recordId=()=>supabaseClient&&crypto.randomUUID?crypto.randomUUID():uid(),iso=(d=today)=>d.toISOString().slice(0,10),money=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])),firstName=n=>String(n||"Aluno").trim().split(/\s+/)[0]||"Aluno";
+    const seed=()=>({session:false,mode:"login",page:"today",selected:null,reveal:null,blind:{},draftPoint:{},pedagogy:{phase:"development",action:"",result:"",context:"",executionIssue:"",expanded:false,panelOpen:false,closedMode:false,toast:null},pedagogyHistory:[],syncInfo:null,usageEvents:[],usageFlow:null,teacherEmail:"",teacherName:"",aiMaterials:"",aiLearnings:[],scoutClassId:"",students:[],classes:[],enroll:[],sessions:[],attendance:[],makeups:[],evals:[],payments:[],ops:[],scout_events:[],scoutHistory:[],match:null,plans:[],cycles:{}});
     let state=load(),modalKind="class",editing=null;
-    function normalizeState(s){s.page=s.page||"today";s.aiMaterials=s.aiMaterials||"";s.aiLearnings=s.aiLearnings||[];s.scoutClassId=s.scoutClassId||"";s.pedagogy={treeId:"construction_finalization",context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:false,...(s.pedagogy||{})};s.students=s.students||[];s.classes=s.classes||[];s.enroll=s.enroll||[];s.evals=s.evals||[];s.payments=s.payments||[];s.ops=s.ops||[];s.scout_events=s.scout_events||[];s.scoutHistory=s.scoutHistory||[];s.makeups=s.makeups||[];s.cycles=s.cycles||{};s.classPlanCache=s.classPlanCache||{};s.sessions=(s.sessions||[]).map(x=>({confirmations:{},confirmationTokens:{},confirmationRemote:{},...x}));s.selected=s.selected&&s.students.some(x=>x.id===s.selected)?s.selected:s.students[0]?.id||null;return s}
+    function normalizeState(s){s.page=s.page||"today";s.aiMaterials=s.aiMaterials||"";s.aiLearnings=s.aiLearnings||[];s.scoutClassId=s.scoutClassId||"";s.syncInfo=s.syncInfo||null;s.usageEvents=s.usageEvents||[];s.usageFlow=s.usageFlow||null;s.pedagogy={phase:"development",action:"",result:"",context:"",executionIssue:"",expanded:false,panelOpen:false,closedMode:false,toast:null,...(s.pedagogy||{})};s.pedagogyHistory=s.pedagogyHistory||[];s.students=s.students||[];s.classes=s.classes||[];s.enroll=s.enroll||[];s.evals=s.evals||[];s.payments=s.payments||[];s.ops=s.ops||[];s.scout_events=s.scout_events||[];s.scoutHistory=s.scoutHistory||[];s.makeups=s.makeups||[];s.cycles=s.cycles||{};s.classPlanCache=s.classPlanCache||{};s.sessions=(s.sessions||[]).map(x=>({confirmations:{},confirmationTokens:{},confirmationRemote:{},...x}));s.selected=s.selected&&s.students.some(x=>x.id===s.selected)?s.selected:s.students[0]?.id||null;return s}
     function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.students))return normalizeState(s)}catch{}const s=seed();localStorage.setItem(KEY,JSON.stringify(s));return s}
-    function save(){localStorage.setItem(KEY,JSON.stringify(state));if(state.teacherEmail)localStorage.setItem(ACCOUNT_PREFIX+state.teacherEmail.toLowerCase(),JSON.stringify({...state,session:false}))}function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),1900)}
+    function save(){localStorage.setItem(KEY,JSON.stringify(state));if(state.teacherEmail)localStorage.setItem(ACCOUNT_PREFIX+state.teacherEmail.toLowerCase(),JSON.stringify({...state,session:false}))}function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2400)}
+    function setSyncStatus(kind,text){state.syncInfo={kind,text,at:new Date().toISOString()};save();renderSyncBanner()}
+    function renderSyncBanner(){const el=document.getElementById("syncBanner");if(!el)return;const info=state.syncInfo;if(!info||info.kind==="ok"){el.classList.add("hidden");return}el.classList.remove("hidden");el.innerHTML=`<div class="row"><div><strong>Sincronização pendente</strong><p class="muted" style="line-height:1.4;margin:.3rem 0 0">${esc(info.text)}</p></div><button type="button" class="btn outline" id="retrySync">Tentar</button></div>`;document.getElementById("retrySync").onclick=async()=>{await syncPushAll();render()}}
+    async function trackUsage(eventName,properties={},durationMs=null,touchCount=null){
+      const row={id:recordId(),event_name:eventName,properties,session_key:state.teacherEmail||"anonymous",duration_ms:durationMs,touch_count:touchCount,created_at:new Date().toISOString()};
+      state.usageEvents=[row,...state.usageEvents].slice(0,250);save();
+      if(!supabaseClient||!state.session)return row;
+      const {data:{user}}=await supabaseClient.auth.getUser();
+      if(!user)return row;
+      const {error}=await supabaseClient.from("usage_events").insert({...row,teacher_id:user.id});
+      if(error&&error.code!=="42P01")console.warn("usage_event falhou:",error.message);
+      return row;
+    }
     function loadAccount(email){try{const s=JSON.parse(localStorage.getItem(ACCOUNT_PREFIX+email.toLowerCase()));if(s&&Array.isArray(s.students))return normalizeState({...s,session:true,teacherEmail:email.toLowerCase()})}catch{}return null}
     function newAccount(email,name=""){return normalizeState({...seed(),session:true,teacherEmail:email.toLowerCase(),teacherName:name||email.split("@")[0]})}
     const student=id=>state.students.find(x=>x.id===id),klass=id=>state.classes.find(x=>x.id===id),studentsFor=cid=>state.enroll.filter(e=>e.class_id===cid).map(e=>student(e.student_id)).filter(Boolean),todayClasses=()=>state.classes.filter(c=>+c.weekday===weekday).sort((a,b)=>a.start.localeCompare(b.start));
@@ -448,7 +479,7 @@
       return todayRows.concat(morningRows);
     }
     function phone(p){const d=String(p||"").replace(/\D/g,"");return d?d.startsWith("55")?d:"55"+d:""}function openZap(text,p=""){const n=phone(p),url=n?`https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(text)}`:`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;toast(n?"Abrindo WhatsApp do aluno.":"Abrindo WhatsApp.");if(matchMedia("(max-width: 760px)").matches||/iPhone|iPad|Android/i.test(navigator.userAgent)){location.href=url;return}window.open(url,"_blank","noopener")}
-    function session(cid,date=iso()){let s=state.sessions.find(x=>x.class_id===cid&&x.date===date);if(!s){const c=klass(cid);s={id:uid(),class_id:cid,date,start:c?.start||"00:00",focus:c?.focus||"",plan:null,confirmations:{},confirmationTokens:{},confirmationRemote:{}};state.sessions.push(s);save()}s.confirmations=s.confirmations||{};s.confirmationTokens=s.confirmationTokens||{};s.confirmationRemote=s.confirmationRemote||{};return s}
+    function session(cid,date=iso()){let s=state.sessions.find(x=>x.class_id===cid&&x.date===date);if(!s){const c=klass(cid);s={id:recordId(),class_id:cid,date,start:c?.start||"00:00",focus:c?.focus||"",plan:null,confirmations:{},confirmationTokens:{},confirmationRemote:{}};state.sessions.push(s);save()}s.confirmations=s.confirmations||{};s.confirmationTokens=s.confirmationTokens||{};s.confirmationRemote=s.confirmationRemote||{};return s}
     function confirmationToken(cid,sid,date=iso()){const s=session(cid,date);if(!s.confirmationTokens[sid]){s.confirmationTokens[sid]=`${uid()}${uid()}${Date.now().toString(36)}`;save()}return s.confirmationTokens[sid]}
     function confirmationPageUrl(token){
       const basePath=location.pathname.replace(/[^/]*$/, "");
@@ -600,19 +631,34 @@
       }
     }
     function selfAssessToken(sid){if(!state.selfAssessTokens)state.selfAssessTokens={};if(!state.selfAssessTokens[sid]){state.selfAssessTokens[sid]=`sa${uid()}${uid()}${Date.now().toString(36)}`;save()}return state.selfAssessTokens[sid]}
-    function selfAssessLink(sid){const st=student(sid);const base=location.origin+location.pathname;const token=selfAssessToken(sid);const name=encodeURIComponent(st?.name||"Aluno");const level=encodeURIComponent(st?.level||"intermediario");
-  // Registra o token no Supabase para que o aluno possa salvar sem login
-  const cfg=window.BEACHFLOW_SUPABASE||{};
-  const teacherId=state.teacherId||null;
-  if(cfg.url&&cfg.anonKey&&teacherId){
-    fetch(`${cfg.url}/rest/v1/rpc/register_self_assess_token`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json","apikey":cfg.anonKey,"Authorization":`Bearer ${state.accessToken||cfg.anonKey}`},
-      body:JSON.stringify({p_student_id:sid,p_token:token,p_teacher_id:teacherId})
-    }).catch(e=>console.warn("register_self_assess_token erro:",e));
-  }
-  return base+"?bf_self="+token+"&bf_student="+name+"&bf_level="+level}
-    function selfAssessMessage(sid){const st=student(sid),link=selfAssessLink(sid);return"Oi, "+firstName(st?.name)+"! 🎾\n\nQuero entender como você se sente em cada fundamento do beach tennis para personalizar os seus treinos.\n\nEssa autoavaliação leva 2 minutos e vai guiar tudo que vamos trabalhar juntos a partir de agora — drills, foco técnico e evolução no radar.\n\nToque no link abaixo:\n"+link}
+    function selfAssessLink(sid,token=selfAssessToken(sid)){const st=student(sid),base=location.origin+location.pathname,name=encodeURIComponent(st?.name||"Aluno"),level=encodeURIComponent(st?.level||"intermediario");return base+"?bf_self="+token+"&bf_student="+name+"&bf_level="+level}
+    function selfAssessMessage(sid,link){const st=student(sid);return"Oi, "+firstName(st?.name)+"! 🎾\n\nQuero entender como você se sente em cada fundamento do beach tennis para personalizar os seus treinos.\n\nEssa autoavaliação leva 2 minutos e vai guiar tudo que vamos trabalhar juntos a partir de agora — drills, foco técnico e evolução no radar.\n\nToque no link abaixo:\n"+link}
+    async function prepareSelfAssessMessage(sid){
+      const st=student(sid);
+      if(!st)throw new Error("Não encontrei o aluno selecionado.");
+      const token=selfAssessToken(sid),link=selfAssessLink(sid,token);
+      if(supabaseClient){
+        const {data:{user}}=await supabaseClient.auth.getUser();
+        if(!user)throw new Error("Entre novamente na conta antes de enviar autoavaliações.");
+        const syncedStudentId=await syncPushStudent(st);
+        if(!syncedStudentId){
+          const cause=String(syncPushStudent.lastError||"");
+          if(/uuid|invalid input syntax/i.test(cause))throw new Error("Este aluno tem um cadastro antigo incompatível com a sincronização. Será necessário atualizar o cadastro antes de enviar o link.");
+          throw new Error("Não consegui sincronizar os dados deste aluno. Toque em Tentar sincronizar e envie o link novamente.");
+        }
+        const {error}=await supabaseClient.rpc("register_self_assess_token",{p_student_id:sid,p_token:token,p_teacher_id:user.id});
+        if(error){
+          const cause=String(error.message||"");
+          console.warn("register_self_assess_token falhou:",cause);
+          if(/Aluno nao pertence|Aluno não pertence/i.test(cause))throw new Error("Este aluno não está vinculado à sua conta no Supabase. Sincronize os alunos e tente novamente.");
+          if(/register_self_assess_token|schema cache|function/i.test(cause))throw new Error("A função de autoavaliação ainda não está disponível no Supabase. Execute a migração de persistência e tente novamente.");
+          throw new Error(`Não consegui registrar o link: ${cause||"erro no Supabase"}.`);
+        }
+        setSyncStatus("ok","Link de autoavaliação salvo no Supabase.");
+      }
+      await trackUsage("self_assessment_link_ready",{student_id:sid});
+      return selfAssessMessage(sid,link);
+    }
     function renderSelfAssessScreen(){
       // WhatsApp às vezes encoda & como %26 — normaliza antes de parsear
       const rawSearch=decodeURIComponent(location.search).replace(/%26/gi,"&");
@@ -628,14 +674,16 @@
       fundamentals.forEach(f=>saScores[f]="6.5");
       function renderSAForm(done=false){
         if(done){selfAssessForm.innerHTML=`<div class="callout" style="text-align:center"><span style="font-size:2.5rem">🎾</span><h2 class="display" style="font-size:1.35rem;margin:.5rem 0">Avaliação enviada!</h2><p class="muted" style="line-height:1.5">Obrigado, ${esc(studentName)}! Seu professor já recebeu os dados e vai usar isso para personalizar os próximos treinos.</p></div>`;return}
-        selfAssessForm.innerHTML=`${fundamentals.map(f=>`<div class="card pad" style="display:grid;gap:.6rem"><div class="row"><strong>${esc(f)}</strong><span class="badge cyan" id="saBadge-${esc(f)}">${esc(evalLabels[saScores[f]]||"Ok")} · ${saScores[f]}</span></div><p class="muted" style="margin:0;line-height:1.35;font-size:.76rem">${(evalCriteria[f]||[]).map(esc).join(" · ")}</p><div class="grid2">${evalScale.map(v=>`<button class="choice ${saScores[f]===v?"sel":""}" type="button" data-sa-fund="${esc(f)}" data-sa-score="${v}">${esc(evalLabels[v])}<br><span class="muted" style="font-size:.68rem;font-weight:700">${esc((evalRubric[f]||{})[v]||"")}</span></button>`).join("")}</div></div>`).join("")}<button id="submitSelfAssess" class="btn primary" style="margin-top:.5rem">Enviar avaliação</button>`;
+        selfAssessForm.innerHTML=`${fundamentals.map(f=>`<div class="card pad" style="display:grid;gap:.6rem"><div class="row"><strong>${esc(f)}</strong><span class="badge cyan" id="saBadge-${esc(f)}">${esc(evalLabels[saScores[f]]||"Ok")} · ${saScores[f]}</span></div><p class="muted" style="margin:0;line-height:1.35;font-size:.76rem">${(evalCriteria[f]||[]).map(esc).join(" · ")}</p><div class="grid2">${evalScale.map(v=>`<button class="choice ${saScores[f]===v?"sel":""}" type="button" data-sa-fund="${esc(f)}" data-sa-score="${v}">${esc(evalLabels[v])}<br><span class="muted" style="font-size:.68rem;font-weight:700">${esc((evalRubric[f]||{})[v]||"")}</span></button>`).join("")}</div></div>`).join("")}<div id="selfAssessError" class="callout hidden" style="border:1px solid color-mix(in oklch,var(--danger) 48%,transparent);color:var(--fg);line-height:1.45"></div><button id="submitSelfAssess" class="btn primary" style="margin-top:.5rem">Enviar avaliação</button>`;
         selfAssessForm.querySelectorAll("[data-sa-score]").forEach(b=>b.onclick=()=>{saScores[b.dataset.saFund]=b.dataset.saScore;const badge=document.getElementById("saBadge-"+b.dataset.saFund);if(badge)badge.textContent=`${evalLabels[b.dataset.saScore]||"Ok"} · ${b.dataset.saScore}`;selfAssessForm.querySelectorAll(`[data-sa-fund="${b.dataset.saFund}"]`).forEach(x=>x.classList.toggle("sel",x.dataset.saScore===b.dataset.saScore))});
         document.getElementById("submitSelfAssess").onclick=async()=>{
           const btn=document.getElementById("submitSelfAssess");
+          const errorBox=document.getElementById("selfAssessError");
+          if(errorBox){errorBox.textContent="";errorBox.classList.add("hidden")}
           btn.textContent="Enviando...";btn.disabled=true;
           const cfg=window.BEACHFLOW_SUPABASE||{};
           // Busca teacher_id e student_id pelo token via Supabase
-          let saved=false;
+          let saved=false,saveError="";
           if(cfg.url&&cfg.anonKey){
             try{
               // Chama RPC anon para salvar autoavaliação
@@ -645,12 +693,29 @@
                 body:JSON.stringify({p_token:token,p_scores:saScores})
               });
               if(res.ok)saved=true;
-            }catch(e){console.warn("save_self_assessment erro:",e)}
+              else{
+                const failure=await res.json().catch(()=>({}));
+                const message=String(failure.message||"");
+                console.warn("save_self_assessment falhou:",message||failure);
+                if(/invalido|inválido|nao encontrada|não encontrada/i.test(message))saveError="Este link de autoavaliação não é mais válido. Solicite um novo link ao professor.";
+                else if(/ja foi enviada|já foi enviada|utilizad/i.test(message))saveError="Esta autoavaliação já foi enviada. Para responder novamente, solicite um novo link ao professor.";
+                else saveError="Não foi possível salvar sua avaliação agora. Tente novamente em alguns instantes.";
+              }
+            }catch(e){
+              console.warn("save_self_assessment erro:",e);
+              saveError="Sem comunicação com o servidor. Verifique sua internet e tente novamente.";
+            }
+          }
+          if(cfg.url&&cfg.anonKey&&!saved){
+            btn.textContent="Tentar enviar novamente";btn.disabled=false;
+            if(errorBox){errorBox.textContent=saveError;errorBox.classList.remove("hidden")}
+            toast(saveError);
+            return;
           }
           // Salva localmente também como fallback
           const sid=Object.keys(state.selfAssessTokens||{}).find(k=>state.selfAssessTokens[k]===token);
           if(sid){
-            fundamentals.forEach(f=>{state.evals.push({id:uid(),student_id:sid,evaluator:"student_blind",fundamental:f,score:+saScores[f]})});
+            fundamentals.forEach(f=>{state.evals.push({id:recordId(),student_id:sid,evaluator:"student_blind",fundamental:f,score:+saScores[f]})});
             state.reveal=sid;save();
           }
           renderSAForm(true);
@@ -784,13 +849,13 @@
         const t=ids.map(sid=>latestEvalScore(sid,f,"teacher")).filter(v=>v!=null);
         const b=ids.map(sid=>latestEvalScore(sid,f,"student_blind")).filter(v=>v!=null);
         const base=t.length?t.reduce((a,c)=>a+c,0)/t.length:(b.length?b.reduce((a,c)=>a+c,0)/b.length:null);
-        const s=scoutEffectiveness(ids,f);
+        const sc=scoutEffectiveness(ids,f);
         let val=null,src="";
         // Média Ponderada = Nota_Professor * 0.7 + Scout_Efetividade * 0.3 (avaliação técnica tem prioridade)
-        if(base!=null&&s!=null){val=base*0.7+s*0.3;src=t.length?"técnica + scout":"auto + scout";}
+        if(base!=null&&sc!=null){val=base*0.7+sc*0.3;src=t.length?"técnica + scout":"auto + scout";}
         else if(base!=null){val=base;src=t.length?"avaliação técnica":"autoavaliação";}
-        else if(s!=null){val=s;src="scout";}
-        if(val!=null)r[f]={score:clampScore(val),source:src,hasTeacher:!!t.length,hasScout:s!=null};
+        else if(sc!=null){val=sc;src="scout";}
+        if(val!=null)r[f]={score:clampScore(val),source:src,hasTeacher:!!t.length,hasScout:sc!=null};
       });
       return r;
     }
@@ -815,9 +880,9 @@
       const c=PLANO_AULA[p.focus]||PLANO_AULA["Consistência"];
       const gaps=p.topGaps.map((g,i)=>`<span class="badge ${i===0?"":"cyan"}">${i+1}. ${esc(g.fundamental)} ${g.score.toFixed(1)}</span>`).join(" ");
       const src=p.scores[p.focus]?.source||"radar";
-      const html=`<div class="focus-card"><div class="row"><p class="eyebrow" style="color:var(--primary)">Plano de aula · ${esc(p.focus)}</p><span class="badge">${esc(src)}</span></div>`+
+      const html=`<div class="focus-card featured"><div class="row"><p class="eyebrow" style="color:var(--primary)">Plano de aula · ${esc(p.focus)}</p><span class="badge">${esc(src)}</span></div>`+
         `<div class="focus-line"><p class="label">Top Gaps (prioridade)</p><div style="display:flex;flex-wrap:wrap;gap:.35rem">${gaps}</div></div>`+
-        `<div class="focus-line"><p class="label">Foco</p><h3 class="display" style="font-size:1.1rem">${esc(c.foco)}</h3></div>`+
+        `<div class="focus-line"><p class="label">Foco</p><h3 class="display">${esc(c.foco)}</h3></div>`+
         `<div class="focus-line"><p class="label">Regra</p><p style="font-weight:850">${esc(c.regra)}</p></div>`+
         `<div class="focus-line"><p class="label">Dinâmica</p><p>${esc(c.dinamica)}</p></div>`+
         `<div class="focus-line"><p class="label">Observar</p><ul class="muted" style="margin:.2rem 0 0;padding-left:1.1rem;line-height:1.55">${c.observar.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`+
@@ -1367,6 +1432,20 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
       const impact=validated?`Há amostra e repetição suficientes para usar esta leitura como realidade de jogo no próximo ciclo. A transição <strong>${esc(reading.transition)}</strong> passa a orientar o treino, não apenas o menor fundamento técnico.`:`Esta leitura ainda não redefine o ciclo. É preciso volume e repetição do mesmo alerta de jogo; o radar técnico continua sendo a base inicial.`;
       return`<div class="callout"><div class="section-head"><div><p class="eyebrow" style="color:var(--accent)">Scout no desenvolvimento</p><strong>${esc(scoutWeightLabel(events.length,validated))}</strong></div><span class="badge ${validated?"":"cyan"}">${events.length} ações</span></div><div class="grid2"><div class="copy"><strong>${esc(reading.profile)}</strong><br><span class="muted">perfil observado</span></div><div class="copy"><strong>${alerts}</strong><br><span class="muted">alertas de contexto</span></div></div><p class="muted" style="line-height:1.45;margin-top:.7rem"><strong>Contexto:</strong> ${esc(reading.diagnosis)}<br><strong>Transição:</strong> ${esc(reading.transition)}<br><strong>Confiança:</strong> ${esc(reading.confidence)}</p><div class="copy" style="margin-top:.7rem"><strong>Impacto no ciclo:</strong><br>${impact}</div><p class="muted" style="line-height:1.45;margin-top:.65rem">O Scout descreve comportamento em jogo; ele não altera a nota técnica do professor nem a autoavaliação. Somente ações em que este aluno foi marcado como executor entram aqui.</p>${groups.slice(0,4).map(g=>{const bad=g.rows.filter(e=>e.tactical_issue).length,date=g.date?new Date(g.date).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}):"--",intent=topCount(g.rows,e=>e.inferred_intention)?.[0]||"sem intenção",issue=topCount(g.rows,e=>e.tactical_issue)?.[0]||"";return`<div class="item" style="grid-template-columns:1fr auto;margin-top:.55rem"><div><strong>${esc(g.title)}</strong><p class="muted" style="margin:.2rem 0 0">${date} · ${g.rows.length} ação(ões) · intenção: ${esc(intent)}${issue?`<br>${esc(issue)}`:""}</p></div><span class="badge ${bad?"warn":"cyan"}">${bad?"rever":"estável"}</span></div>`}).join("")}${semanticRadarHtml(reading.radar,reading.radarVolume)}</div>`;
     }
+    function studentCauseDiagnosis(sid){
+      if(!window.BEACHFLOW_CAUSE_ENGINE)return null;
+      return window.BEACHFLOW_CAUSE_ENGINE.evaluateStudent({
+        student:student(sid),
+        teacherScores:scores(sid,"teacher"),
+        selfScores:scores(sid,"student_blind"),
+        scoutEvents:state.scout_events.filter(e=>e.student_id===sid)
+      });
+    }
+    function studentCauseHtml(sid){
+      const diag=studentCauseDiagnosis(sid);
+      if(!diag)return`<div class="callout"><p class="eyebrow" style="color:var(--primary)">Diagnóstico causal</p><strong>Aguardando evidência</strong><p class="muted" style="line-height:1.45;margin-top:.45rem">Com autoavaliação, avaliação técnica ou Scout individual, o BeachFlow passa a cruzar percepção, técnica e jogo para sugerir a causa provável.</p></div>`;
+      return`<div class="callout"><div class="section-head"><div><p class="eyebrow" style="color:var(--primary)">Diagnóstico causal</p><strong>${esc(diag.label)} · ${esc(diag.confidence)}</strong></div><span class="badge cyan">${esc(diag.sourceLabel||"base inicial")}</span></div><div class="focus-card"><div class="focus-line"><span class="eyebrow">Foco</span><h3 class="display" style="font-size:1.05rem;margin:0">${esc(diag.microFocus)}</h3></div><div class="focus-line"><span class="eyebrow">Regra</span><p><strong>${esc(diag.microRule)}</strong></p></div></div><p class="muted" style="line-height:1.45;margin:.7rem 0 0">${esc(diag.probableCause)}</p><details style="margin-top:.65rem"><summary class="muted" style="font-weight:850">Ver base do diagnóstico</summary><div class="copy" style="margin-top:.55rem"><strong>Dinâmica sugerida:</strong><br>${esc(diag.drill)}${diag.evidence?.length?`<br><br><strong>Evidências:</strong><br>${diag.evidence.map(x=>`• ${esc(x)}`).join("<br>")}`:""}${diag.alternatives?.length?`<br><br><strong>Também observar:</strong> ${diag.alternatives.map(x=>esc(x.label)).join(", ")}`:""}</div></details></div>`;
+    }
     function classScoutImpactHtml(ids,ctx=null){
       const events=state.scout_events.filter(e=>ids.includes(e.student_id)&&e.inferred_intention),reading=semanticScope(events),validated=!!ctx?.scout_validado,fund=ctx?.fundamento_critico_radar||ctx?.fundamento_app||"radar técnico";
       if(!events.length)return`<div class="callout"><p class="eyebrow" style="color:var(--accent)">Impacto do Scout no ciclo</p><strong>Ainda sem evidência de jogo</strong><p class="muted" style="line-height:1.45;margin:.45rem 0 0">O ciclo parte de ${esc(fund)}. Um Scout com executor e contexto permitirá validar se o problema aparece na partida.</p></div>`;
@@ -1401,10 +1480,14 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
       const transition=ctx?.transicao_quebrada_scout||"";
       const pressureRecovery=confirmed&&transition.includes("Defesa/Reconstrução")&&transition.includes("Pressão");
       const prematureFinish=confirmed&&transition.includes("Finalização");
-      return{title:pressureRecovery?"Recuperar antes de acelerar":prematureFinish?"Criar vantagem antes de definir":confirmed&&transition&&!transition.includes("hipótese")?transition:themes[f]||themes.Consistência,status:confirmed?"Problema de jogo confirmado":"Hipótese inicial a validar",note:confirmed?"O Scout tem amostra suficiente para orientar o próximo ciclo.":"O ciclo nasce do radar técnico/percepção disponível; o Scout final confirmará a transferência para o jogo."};
+      return{title:pressureRecovery?"Recuperar antes de acelerar":prematureFinish?"Criar vantagem antes de definir":confirmed&&transition&&!transition.includes("hipótese")?transition:themes[f]||themes.Consistência,status:confirmed?"Ciclo validado por dados":"Hipótese inicial a validar",note:confirmed?"O Scout tem amostra suficiente para orientar o próximo ciclo.":"O ciclo nasce do radar técnico/percepção disponível; o Scout final confirmará a transferência para o jogo."};
     }
     function buildCycle(ctx,duration=2,classId=""){
       const weeks=Math.max(1,Math.min(4,Number(duration)||2)),theme=cycleTheme(ctx),f=ctx?.fundamento_app||"Consistência";
+      // BLOQUEIO DE INTEGRIDADE: sem Gap Principal + Causa Provável + turma, não gera treino genérico.
+      // O nível (iniciante/intermediário/avançado) só adapta a complexidade — nunca é o filtro de geração.
+      const gapPrincipal=ctx?.fundamento_app||ctx?.fundamento_critico_radar,causaProvavel=ctx?.transicao_quebrada_scout||theme?.title,turmaId=classId;
+      if(!gapPrincipal||!causaProvavel||!turmaId)throw new Error("Treino bloqueado: dados insuficientes para diagnóstico específico.");
       const pressureRecovery=!!ctx?.scout_validado&&String(ctx?.transicao_quebrada_scout||"").includes("Defesa/Reconstrução")&&String(ctx?.transicao_quebrada_scout||"").includes("Pressão");
       const prematureFinish=!!ctx?.scout_validado&&String(ctx?.transicao_quebrada_scout||"").includes("Finalização");
       const recoverySteps=[
@@ -1441,14 +1524,15 @@ ${f.regras.map(x=>`- ${x}`).join("\n")}`;}
       const progressionCriterion=prematureFinish?"Avançar quando a dupla cria a bola verde antes de definir e mantém cobertura após a tentativa de finalização.":f==="Saque"&&!pressureRecovery?"Avançar quando a dupla direciona o saque com controle, reconhece a devolução gerada e executa a terceira bola sem perder cobertura.":"Avançar quando a dupla reconhece a situação correta, executa com margem e recupera cobertura depois da ação.";
       const regressionCriterion=prematureFinish?"Se a turma continua buscando winner em Zona Amarela, retirar a finalização e pontuar apenas construção com margem até a bola verde aparecer.":f==="Saque"&&!pressureRecovery?"Se o saque perde controle ou a dupla não lê a devolução, manter um único alvo amplo e treinar saque + terceira bola de construção antes de variar.":"Se a escolha ainda quebrar sob pressão, reduzir velocidade e voltar à construção/neutralização antes de acelerar.";
       const validationCriterion=prematureFinish?"No Scout final, comparar tentativas de finalização em Zona Amarela com definições precedidas de construção ou pressão em Zona Verde.":f==="Saque"&&!pressureRecovery?"No Scout final, observar direção do saque, qualidade da devolução recebida e decisão da terceira bola; ace isolado não confirma evolução do ciclo.":"Realizar scout curto na última semana. Observar contexto da escolha, transição tática e recuperação, sem mudar o ciclo no meio da aplicação.";
-      return{id:uid(),class_id:classId,duration:weeks,current_week:1,theme:theme.title,status:theme.status,status_note:theme.note,focus:f,score:ctx?.nota_media_radar||"--",source:ctx?.fonte_radar||"radar disponível",ctx,weeks:selected,progressionCriterion,regressionCriterion,validationCriterion,lesson:plan({focus:f,level:ctx?.nivel||"intermediario",aiContext:ctx}),markdown:"",created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+      return{id:recordId(),class_id:classId,duration:weeks,current_week:1,theme:theme.title,status:theme.status,status_note:theme.note,focus:f,score:ctx?.nota_media_radar||"--",source:ctx?.fonte_radar||"radar disponível",ctx,weeks:selected,progressionCriterion,regressionCriterion,validationCriterion,lesson:plan({focus:f,level:ctx?.nivel||"intermediario",aiContext:ctx}),markdown:"",created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
     }
     function cycleLesson(cycle){return cycle.lesson||plan({focus:cycle.focus||"Consistência",level:cycle.ctx?.nivel||"intermediario",aiContext:cycle.ctx||{}})}
     function cycleMarkdown(cycle){
       const ctx=cycle.ctx||{},pl=cycleLesson(cycle);
       return`# CICLO IA: ${cycle.theme}
 **Duração:** ${cycle.duration} semana(s) | **Semana atual:** ${cycle.current_week}/${cycle.duration}
-**${cycle.status}:** ${cycle.status_note}
+**${cycle.status}: ${cycle.theme}**
+${cycle.status_note}
 **Fonte inicial:** ${cycle.source} | **Referência técnica:** ${ctx.fundamento_critico_radar||cycle.focus} (${cycle.score}/10)
 
 ## Progressão do Ciclo
@@ -1471,12 +1555,29 @@ ${markdownPlan(pl,ctx).replace(/^# PLANO DE TREINAMENTO:[^\n]*\n/,"")}`;
     function cycleHeaderHtml(cycle){
       return`<div class="callout"><p class="eyebrow" style="color:var(--primary)">Ciclo IA ativo</p><h3 class="display" style="font-size:1.08rem;margin:.35rem 0">${esc(cycle.theme)}</h3><p class="muted" style="line-height:1.45"><strong>${esc(cycle.status)}</strong><br>${esc(cycle.status_note)}<br>Duração: ${cycle.duration} semana(s) · Aula atual: semana ${cycle.current_week}/${cycle.duration}</p></div><div class="callout"><strong>Progressão do ciclo</strong>${cycle.weeks.map((w,i)=>`<p class="muted" style="line-height:1.4;margin:.42rem 0"><strong>Semana ${i+1}${i+1===cycle.current_week?" · atual":""}:</strong> ${esc(w.title)} - ${esc(w.goal)}</p>`).join("")}<p class="muted" style="line-height:1.45;margin-top:.6rem"><strong>Validação:</strong> scout curto ao final do ciclo; uma observação durante o ciclo não altera o foco automaticamente.</p></div>`;
     }
+    function cyclePocket(cycle){
+      const theme=String(cycle?.theme||""),focus=cycle?.focus||"Consistência",week=cycle?.weeks?.[Math.max(0,(cycle.current_week||1)-1)]?.goal||"Aplicar o tema em situação real.";
+      if(theme.includes("Recuperar antes de acelerar"))return{focus:"Recuperar antes de acelerar.",rule:"Atacar só depois de reorganizar.",dynamic:"Começar pressionado: lob/gancho profundo, fechar centro e só depois liberar aceleração.",watch:"Observar quem tenta acelerar ainda desequilibrado."};
+      if(theme.includes("Criar vantagem antes de definir"))return{focus:"Criar vantagem antes de definir.",rule:"Winner cedo perde bônus.",dynamic:"Rali livre com definição liberada apenas após deslocar o adversário ou receber bola favorável.",watch:"Observar se a definição nasce da chance real ou da pressa."};
+      if(focus==="Saque")return{focus:"Saque para preparar a terceira bola.",rule:"Ace não é o objetivo principal.",dynamic:"Saque no alvo, leitura da devolução e primeira bola profunda com recuperação da dupla.",watch:"Observar se o saque gera uma terceira bola melhor."};
+      if(focus==="Backhand")return{focus:"Backhand para controlar o ponto.",rule:"Backhand constrói; não força bola baixa.",dynamic:"Backhand com margem e profundidade. Se vier bola favorável, usar ventaglio/anômala ou controle.",watch:"Observar se o aluno recupera base depois do contato."};
+      if(focus==="Tapa")return{focus:"Acelerar só com vantagem.",rule:"Tapa só no forehand alto.",dynamic:"Bola média-alta no forehand libera tapa; backhand usa ventaglio/anômala ou controle.",watch:"Observar se o aluno tenta acelerar bola baixa ou atrasada."};
+      if(focus==="Devolução")return{focus:"Entrar no ponto sem entregar a terceira bola.",rule:"Devolveu, fechou o centro.",dynamic:"Devolução profunda com recuperação. Ponto libera quando a dupla neutraliza a terceira bola.",watch:"Observar se a devolução dá tempo para organizar."};
+      return{focus:theme||`Melhorar ${focus}.`,rule:"Primeiro organizar, depois acelerar.",dynamic:week,watch:"Observar escolha da bola, recuperação e cobertura da dupla."};
+    }
+    function cyclePocketHtml(cycle){
+      const p=cyclePocket(cycle),full=cycle.markdown||cycleMarkdown(cycle);
+      return`<div class="focus-card featured"><p class="eyebrow" style="color:var(--primary)">Aula de hoje · semana ${cycle.current_week}/${cycle.duration}</p><div class="focus-line"><span class="eyebrow">Foco</span><h3 class="display" style="font-size:1.18rem;margin:0">${esc(p.focus)}</h3></div><div class="focus-line"><span class="eyebrow">Regra</span><p><strong>${esc(p.rule)}</strong></p></div><div class="focus-line"><span class="eyebrow">Dinâmica</span><p>${esc(p.dynamic)}</p></div><div class="focus-line"><span class="eyebrow">Observar</span><p>${esc(p.watch)}</p></div></div><details class="callout"><summary class="muted" style="font-weight:900">Ver ciclo completo</summary>${cycleHeaderHtml(cycle)}<div id="plano-ia-conteudo" class="callout plano-ia-completo" style="margin-top:.7rem">${markdownToHtml(full)}</div></details><div id="planEditBox" class="form hidden"><textarea id="planEditor" class="textarea" style="min-height:22rem">${esc(full)}</textarea><div class="grid2"><button class="btn primary" id="savePlanEdit">Salvar edição</button><button class="btn ghost" id="cancelPlanEdit">Cancelar</button></div></div>`;
+    }
+    function cycleSupportPanelHtml(materials,diagnosticHtml,scoutImpactHtml,durationControl){
+      return`<details class="callout"><summary style="font-weight:900">Base, diagnóstico e materiais</summary><div class="form" style="margin-top:.75rem">${durationControl}${diagnosticHtml}${scoutImpactHtml}${materials}</div></details>`;
+    }
     async function saveCycleRemote(classId,cycle,markdown=""){
       if(!supabaseClient)return;
       const {data:{user}}=await supabaseClient.auth.getUser();
       if(!user)return;
       const ctx=cycle.ctx||{},hash=String(Math.abs(`${cycle.theme}|${cycle.duration}|${cycle.updated_at}`.split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)));
-      const {error}=await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar||cycle.focus,level:ctx.nivel||"",prompt_hash:hash,payload_json:{type:"cycle",cycle:{...cycle,markdown}},knowledge_version:"cycle-contextual-v1"});
+      const {error}=await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar||cycle.focus,level:ctx.nivel||"",prompt_hash:hash,payload_json:{type:"cycle",cycle:{...cycle,markdown}},knowledge_version:PLAN_TEMPLATE_VERSION});
       if(error)console.warn("Não foi possível sincronizar o ciclo:",error.message);
     }
     function physicalScript(f,techLevel,ctx){
@@ -1586,7 +1687,7 @@ ${markdownPlan(pl,ctx).replace(/^# PLANO DE TREINAMENTO:[^\n]*\n/,"")}`;
       }[techLevel];
       const scoutText=e.length?e.join("; "):`sem scout crítico recente; foco preventivo em ${f}`;
       const radarLabel=radarScore?`${radarScore.toFixed(1)}/10`:"sem nota consolidada";
-      const greenTransition=techLevel==="Verde"&&f==="Gancho"?"Para nível Verde, tratar gancho como resposta a bola alta e funda: saída baixa para tirar tempo ou contra-lob para recuperar espaço. Contra smash, usar defesa em arco inferior ou estático de forehand/backhand.":"";
+      const greenTransition=rawLevel==="intermediario"&&f==="Gancho"?"Tratar gancho como resposta a bola alta e funda: saída baixa para tirar tempo ou contra-lob para recuperar espaço. Contra smash, usar defesa em arco inferior ou estático de forehand/backhand.":"";
       const start=f==="Saque"?"saque":f==="Lob"||f==="Posicionamento"?"lob profundo obrigatório":f==="Consistência"||f==="Backhand"||f==="Forehand"?"rali iniciado pelo professor com bola alta/profunda":"devolução ou bola viva de rali";
       const correction=f==="Posicionamento"?"cobertura de espaço e ajuste de base":`execução intencional de ${f.toLowerCase()}`;
       const phys=physicalScript(f,techLevel,ctx.aiContext);
@@ -1786,7 +1887,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
 * **Perguntas:**
 
 ### 7. Sumário para o WhatsApp do Grupo da Turma`;}
-    async function saveAiDrill(classId,ctx,markdown,cycle=null){if(!supabaseClient)return;const {data:{user}}=await supabaseClient.auth.getUser();if(!user)return;const hash=String(Math.abs(promptTreinoIA(ctx).split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)));await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar,level:ctx.nivel,prompt_hash:hash,payload_json:{contexto:ctx,markdown,cycle},knowledge_version:cycle?"cycle-contextual-v1":"manual-ciclo1-ciclo3-v2"})}
+    async function saveAiDrill(classId,ctx,markdown,cycle=null){if(!supabaseClient)return;const {data:{user}}=await supabaseClient.auth.getUser();if(!user)return;const hash=String(Math.abs(promptTreinoIA(ctx).split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)));await supabaseClient.from("ai_drills").insert({teacher_id:user.id,class_id:classId,fundamental:ctx.fundamento_critico_radar,level:ctx.nivel,prompt_hash:hash,payload_json:{contexto:ctx,markdown,cycle},knowledge_version:cycle?PLAN_TEMPLATE_VERSION:"manual-ciclo1-ciclo3-v2"})}
     async function savePlanLearning(classId,ctx,originalMarkdown,editedMarkdown){
       const summary=learningSummary(editedMarkdown);
       state.aiLearnings=state.aiLearnings||[];
@@ -1806,6 +1907,26 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       if(!ctx)ctx=prepararContextoIALocal(classSessionId);
       if(!ctx){toast("Não encontrei alunos/avaliações nesta turma. Gere pelo botão local ou verifique se os alunos estão matriculados na turma certa.");return null}
       ctx={...ctx,cycle_duration:cycle?.duration||2};
+      // trainingContext formal: o motor lê gap+causa+confiança, nunca só o nível pedagógico.
+      const trainingContext={
+        turma:classId,
+        alunos:ctx.alunos_considerados||[],
+        scoutResumo:ctx.erros_frequentes||"sem scout relevante",
+        autoavaliacaoResumo:ctx.fonte_radar||"sem fonte",
+        gapPrincipal:ctx.fundamento_app||ctx.fundamento_critico_radar,
+        causaProvavel:ctx.transicao_quebrada_scout||cycleTheme(ctx).title,
+        confiancaDiagnostico:ctx.scout_validado?"alta":(ctx.confianca_radar||"baixa")
+      };
+      // BLOQUEIO: diagnóstico precisa ser específico (gap + causa + turma).
+      if(!trainingContext.gapPrincipal||!trainingContext.causaProvavel||!trainingContext.turma){
+        if(container)container.innerHTML=`<div class="callout warn"><strong>Treino bloqueado: dados insuficientes para diagnóstico específico.</strong><p class="muted" style="line-height:1.45;margin:.4rem 0 0">Registre avaliação técnica e/ou Scout desta turma para liberar a geração.</p></div>`;
+        return null;
+      }
+      // Frase de honestidade do diagnóstico: validado por dados vs. hipótese a validar.
+      const dadosSuficientes=ctx.scout_validado||trainingContext.confiancaDiagnostico==="alta";
+      const tema=trainingContext.causaProvavel;
+      ctx.statusDiagnostico=dadosSuficientes?`Ciclo validado por dados: ${tema}`:`Hipótese inicial a validar: ${tema}`;
+      ctx.trainingContext=trainingContext;
       if(container)container.innerHTML=`<div class="empty">Analisando o radar e desenhando o ciclo de treinamento...</div>`;
       try{
         let markdown="";
@@ -1817,6 +1938,8 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
           const data=await response.json();
           markdown=data.choices?.[0]?.message?.content||data.output_text||"";
         }else markdown=cycleMarkdown(cycle||buildCycle(ctx,ctx.cycle_duration,classId));
+        // Garante a frase de honestidade do diagnóstico no topo do plano, em ambos os caminhos.
+        if(ctx.statusDiagnostico&&!markdown.includes(ctx.statusDiagnostico))markdown=markdown.replace(/^(# CICLO IA:[^\n]*\n)/,`$1**${ctx.statusDiagnostico}**\n`);
         if(cycle){cycle.markdown=markdown;cycle.updated_at=new Date().toISOString()}
         if(container)container.innerHTML=`<div class="callout plano-ia-completo">${markdownToHtml(markdown)}</div>`;
         await saveAiDrill(classId,ctx,markdown,cycle||null);
@@ -1827,15 +1950,24 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
         return cycleMarkdown(cycle||buildCycle(ctx,ctx.cycle_duration,classId));
       }
     }
+    // Cenários de simulação por MATURIDADE da turma (apenas complexidade), nunca rótulo CBT de cor.
     const demoIA={
-      amarelo:{nivel:"iniciante",fundamento_critico_radar:"Devolução e Consistência de Fundo",fundamento_app:"Consistência",nota_media_radar:"4.2",erros_frequentes:"Muitos erros não forçados na devolução curta e bola de fundo sem profundidade.",observacoes_alunos:"Turma iniciante: evitar excesso de velocidade e priorizar volume."},
-      verde:{nivel:"intermediario",fundamento_critico_radar:"Gancho de Fundo",fundamento_app:"Gancho",nota_media_radar:"3.8",erros_frequentes:"60% das bolas altas no fundo voltam curtas no meio ou sem contra-lob efetivo.",observacoes_alunos:"Gancho deve sair baixo para tirar tempo ou em contra-lob para recuperar espaço. Contra smash, usar arco inferior ou estático de forehand/backhand."},
-      azul:{nivel:"avancado",fundamento_critico_radar:"Interceptação na Rede",fundamento_app:"Posicionamento",nota_media_radar:"5.1",erros_frequentes:"A dupla chega na rede, mas perde bolas no meio e intercepta atrasada.",observacoes_alunos:"Aumentar pressão sem perder cobertura e efeito espelho."}
+      iniciante:{label:"Turma Iniciante",nivel:"iniciante",fundamento_critico_radar:"Devolução e Consistência de Fundo",fundamento_app:"Consistência",nota_media_radar:"4.2",erros_frequentes:"Muitos erros não forçados na devolução curta e bola de fundo sem profundidade.",observacoes_alunos:"Turma iniciante: evitar excesso de velocidade e priorizar volume."},
+      intermediaria:{label:"Turma Intermediária",nivel:"intermediario",fundamento_critico_radar:"Gancho de Fundo",fundamento_app:"Gancho",nota_media_radar:"3.8",erros_frequentes:"60% das bolas altas no fundo voltam curtas no meio ou sem contra-lob efetivo.",observacoes_alunos:"Gancho deve sair baixo para tirar tempo ou em contra-lob para recuperar espaço. Contra smash, usar arco inferior ou estático de forehand/backhand."},
+      avancada:{label:"Turma Avançada",nivel:"avancado",fundamento_critico_radar:"Interceptação na Rede",fundamento_app:"Posicionamento",nota_media_radar:"5.1",erros_frequentes:"A dupla chega na rede, mas perde bolas no meio e intercepta atrasada.",observacoes_alunos:"Aumentar pressão sem perder cobertura e efeito espelho."}
     };
     function simularTreinoIA(kind,container,duration=2){
-      const ctx=enrichManualContext({...((demoIA[kind]||demoIA.verde)),cycle_duration:duration,scout_validado:false}),cycle=buildCycle(ctx,duration,"demo");
+      const cenario=demoIA[kind]||demoIA.intermediaria;
+      let ctx,cycle;
+      try{
+        ctx=enrichManualContext({...cenario,cycle_duration:duration,scout_validado:false});
+        cycle=buildCycle(ctx,duration,"demo");
+      }catch(err){
+        if(container)container.innerHTML=`<div class="callout warn"><strong>${esc(err.message)}</strong></div>`;
+        return null;
+      }
       const md=cycleMarkdown(cycle);
-      if(container)container.innerHTML=`<div class="callout"><p class="eyebrow" style="color:var(--accent)">Simulação ${esc(kind)}</p><p class="muted" style="line-height:1.45">Cenário: ${esc(ctx.fundamento_critico_radar)} · média ${esc(ctx.nota_media_radar)}/10</p></div>${cycleHeaderHtml(cycle)}<div class="callout plano-ia-completo">${markdownToHtml(md)}</div>`;
+      if(container)container.innerHTML=`<div class="callout"><p class="eyebrow" style="color:var(--accent)">Simulação · ${esc(cenario.label||kind)}</p><p class="muted" style="line-height:1.45">Cenário: ${esc(ctx.fundamento_critico_radar)} · média ${esc(ctx.nota_media_radar)}/10</p></div>${cycleHeaderHtml(cycle)}<div class="callout plano-ia-completo">${markdownToHtml(md)}</div>`;
       return{markdown:md,cycle};
     }
     function aiMaterialsHtml(){return`<div class="card pad form"><div class="section-head"><div><h2 style="color:var(--fg);font-size:1rem;letter-spacing:0;text-transform:none">Materiais da IA</h2><p class="muted" style="margin:.15rem 0 0;font-weight:800;font-size:.78rem">Cole observações, drills, métodos ou regras que devem complementar os próximos ciclos.</p></div><span class="badge cyan">Extra</span></div><textarea id="aiMaterials" class="textarea" placeholder="Ex: priorizar drills com 4 alunos, evitar saltos repetidos, contra smash usar arco inferior/estático, adaptar para quadra cheia...">${esc(state.aiMaterials||"")}</textarea><button id="saveAiMaterials" class="btn outline" type="button">Salvar materiais</button></div>`}
@@ -1846,7 +1978,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     }
     function radarSvg(vals,extra){const cx=180,cy=170,R=112,pt=(v,i,r=R)=>{const a=-Math.PI/2+Math.PI*2*i/fundamentals.length;return[cx+Math.cos(a)*r*(v/10),cy+Math.sin(a)*r*(v/10)]},poly=(sc,color,fill,dash="")=>`<polygon points="${fundamentals.map((f,i)=>pt(sc[f]||0,i).join(",")).join(" ")}" fill="${fill}" stroke="${color}" stroke-width="2.5" ${dash}></polygon>`;return`<svg viewBox="0 0 360 330">${[2,4,6,8,10].map(l=>`<polygon points="${fundamentals.map((_,i)=>pt(l,i).join(",")).join(" ")}" fill="none" stroke="rgba(255,255,255,.08)"/>`).join("")}${fundamentals.map((f,i)=>{const p=pt(10,i),lp=pt(10,i,140);return`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="rgba(255,255,255,.1)"/><text x="${lp[0]}" y="${lp[1]}" text-anchor="middle" dominant-baseline="middle" fill="rgba(229,239,246,.74)" font-size="10" font-weight="800">${f}</text>`}).join("")}${poly(vals,"oklch(0.86 0.22 145)","rgba(83,246,101,.18)")}${extra?poly(extra,"oklch(0.78 0.18 220)","rgba(64,195,255,.12)",'stroke-dasharray="7 6"'):""}</svg>`}
     function render(){if(renderSelfAssessScreen())return;if(renderConfirmationLink())return;selfAssessScreen.classList.add("hidden");confirmScreen.classList.add("hidden");document.getElementById("login").classList.toggle("hidden",state.session);document.getElementById("app").classList.toggle("hidden",!state.session);document.getElementById("nav").classList.toggle("hidden",!state.session);if(!state.session)return;["today","students","classes","scout","finance"].forEach(p=>document.getElementById("page"+p[0].toUpperCase()+p.slice(1)).classList.toggle("hidden",state.page!==p));document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.getElementById("todayLabel").textContent=today.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"short"});renderToday();renderStudents();renderClasses();renderScout();renderFinance();wireCreates()}
-    function renderToday(){const cls=todayClasses(),cap=cls.reduce((s,c)=>s+ +c.capacity,0),fill=cls.reduce((s,c)=>s+studentsFor(c.id).length,0);stClasses.textContent=cls.length;stStudents.textContent=state.students.length;stOcc.textContent=cap?Math.round(fill/cap*100)+"%":"0%";agenda.innerHTML=cls.length?cls.map(classCard).join(""):`<div class="empty">Nenhuma turma hoje.</div>`;agenda.querySelectorAll("[data-class]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-edit]"))return;openClass(c.dataset.class)});ops.innerHTML=state.ops.filter(o=>!o.resolved).map(o=>`<button class="item card" data-op="${o.id}" style="grid-template-columns:1fr auto"><div><span class="badge ${o.kind==="waitlist"?"warn":"cyan"}">${esc(o.kind)}</span><p style="margin:.45rem 0 0;font-weight:850;text-align:left">${esc(o.text)}</p>${o.kind==="waitlist"?'<p class="muted" style="margin:.25rem 0 0;font-size:.76rem;text-align:left">Toque para chamar reposição</p>':""}</div><span class="menu">×</span></button>`).join("")||`<div class="empty">Nenhuma ação pendente.</div>`;ops.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>{const o=state.ops.find(x=>x.id===b.dataset.op);if(o.kind==="waitlist")return openReplacement(o);o.resolved=true;save();render()})}
+    function renderToday(){const cls=todayClasses(),cap=cls.reduce((s,c)=>s+ +c.capacity,0),fill=cls.reduce((s,c)=>s+studentsFor(c.id).length,0);stClasses.textContent=cls.length;stStudents.textContent=state.students.length;stOcc.textContent=cap?Math.round(fill/cap*100)+"%":"0%";renderSyncBanner();agenda.innerHTML=cls.length?cls.map(classCard).join(""):`<div class="empty">Nenhuma turma hoje.</div>`;agenda.querySelectorAll("[data-class]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-edit]"))return;openClass(c.dataset.class)});ops.innerHTML=state.ops.filter(o=>!o.resolved).map(o=>`<button class="item card" data-op="${o.id}" style="grid-template-columns:1fr auto"><div><span class="badge ${o.kind==="waitlist"?"warn":"cyan"}">${esc(o.kind)}</span><p style="margin:.45rem 0 0;font-weight:850;text-align:left">${esc(o.text)}</p>${o.kind==="waitlist"?'<p class="muted" style="margin:.25rem 0 0;font-size:.76rem;text-align:left">Toque para chamar reposição</p>':""}</div><span class="menu">×</span></button>`).join("")||`<div class="empty">Nenhuma ação pendente.</div>`;ops.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>{const o=state.ops.find(x=>x.id===b.dataset.op);if(o.kind==="waitlist")return openReplacement(o);o.resolved=true;save();render()})}
     function classCard(c){const f=studentsFor(c.id).length;return`<article class="class-card card" data-class="${c.id}"><div><strong class="time">${esc(c.start)}</strong><p class="muted" style="margin:.2rem 0 0;font-size:.72rem;font-weight:850">${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][c.weekday]}</p></div><div><strong>${esc(c.name)}</strong><div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem">${c.focus?`<span class="badge">⌖ ${esc(c.focus)}</span>`:""}<span class="badge cyan">${esc(c.level)}</span></div></div><div style="display:grid;justify-items:end;gap:.35rem"><span class="badge ${f>=c.capacity?"":"warn"}">${f}/${c.capacity}</span><button class="menu" data-edit="${c.id}">...</button></div></article>`}
     function hasTeacherRadar(ids){return state.evals.some(e=>(e.evaluator==="teacher"||e.evaluator==="student_blind")&&ids.includes(e.student_id))}
     function studentScoutPlanContext(sid,focus){
@@ -1855,6 +1987,44 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       if(!scoutDiagnosisConfirmed(events,reading))return null;
       return{nota_media_radar:displayScore(sid,focus).score||0,transicao_quebrada_scout:reading.transition,scout_validado:true,erros_frequentes:`Scout individual validado: ${reading.diagnosis}. Direção: ${reading.training}`};
     }
+    function studentPracticalScoutText(reading,weakest,events,validated){
+      const diagnosis=String(reading?.diagnosis||"").toLowerCase(),training=String(reading?.training||"").toLowerCase();
+      const base=validated?"Esse padrão apareceu mais de uma vez no jogo.":"A amostra ainda é pequena, então vamos usar isso como hipótese de quadra.";
+      if(diagnosis.includes("neutro")){
+        return{
+          observed:`${base} Na prática, você consegue manter a bola em jogo, mas muitas bolas voltam sem incomodar o adversário. A troca continua viva, porém sem criar vantagem clara.`,
+          focus:`Na próxima aula, o foco será transformar uma bola segura em uma bola mais difícil: mais profundidade, melhor direção e recuperação da base depois do golpe.`
+        };
+      }
+      if(diagnosis.includes("construção")||training.includes("desequil")){
+        return{
+          observed:`${base} Você tenta preparar o ponto, mas ainda falta fazer o adversário sair da posição confortável antes de acelerar.`,
+          focus:`Na próxima aula, o foco será construir melhor a bola: empurrar, tirar espaço ou variar antes de tentar definir.`
+        };
+      }
+      if(diagnosis.includes("pressão")||diagnosis.includes("aceler")){
+        return{
+          observed:`${base} Você tenta acelerar algumas bolas, mas nem sempre a bola estava pronta para isso. O erro aparece mais pela escolha do momento do que só pelo golpe.`,
+          focus:`Na próxima aula, o foco será reconhecer a bola certa para acelerar e recuperar a posição depois da ação.`
+        };
+      }
+      if(diagnosis.includes("defesa")||diagnosis.includes("reconstru")){
+        return{
+          observed:`${base} Quando fica pressionado, você até consegue devolver algumas bolas, mas ainda nem sempre ganha tempo suficiente para reorganizar a dupla.`,
+          focus:`Na próxima aula, o foco será sair da pressão com mais margem e voltar para uma posição estável antes de atacar.`
+        };
+      }
+      if(diagnosis.includes("final")){
+        return{
+          observed:`${base} Você procura definir o ponto, mas algumas tentativas aparecem antes da vantagem estar clara.`,
+          focus:`Na próxima aula, o foco será criar a bola certa antes de finalizar.`
+        };
+      }
+      return{
+        observed:`${base} O Scout mostrou situações ligadas a ${weakest}, mas ainda precisamos validar em quadra qual erro mais se repete: escolha da bola, execução ou recuperação.`,
+        focus:`Na próxima aula, vamos observar ${weakest} em jogo real e escolher um ajuste simples para repetir.`
+      };
+    }
     function studentScoutReport(sid){
       const st=student(sid),auto=scores(sid,"student_blind"),rated=fundamentals.filter(f=>auto[f]>0);
       if(!rated.length)return{ready:false,reason:"Receba a autoavaliação do aluno antes de gerar o relatório."};
@@ -1862,10 +2032,13 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       if(!events.length)return{ready:false,reason:"Registre ações do aluno no Scout antes de gerar o relatório."};
       const weakest=rated.reduce((a,b)=>auto[b]<auto[a]?b:a,rated[0]),strongest=rated.reduce((a,b)=>auto[b]>auto[a]?b:a,rated[0]);
       const reading=semanticScope(events),validated=scoutDiagnosisConfirmed(events,reading);
-      const evidence=validated?`O padrão já apareceu de forma repetida no jogo: ${reading.diagnosis}.`:`A amostra ainda é inicial, mas observamos: ${reading.diagnosis}.`;
-      const objective=validated?reading.training:`Vamos observar ${weakest} em situações reais e confirmar qual ajuste transfere melhor para o jogo.`;
-      const message=`Oi, ${firstName(st?.name)}! Segue sua devolutiva BeachFlow.\n\nCOMO VOCÊ SE PERCEBE\nNa sua autoavaliação, sua maior oportunidade foi ${weakest} (${scoreText(auto[weakest])}/10) e seu ponto de maior confiança foi ${strongest} (${scoreText(auto[strongest])}/10).\n\nO QUE APARECEU NO JOGO\nRegistramos ${events.length} ação(ões) suas no Scout. ${evidence}\nTransição observada: ${reading.transition}.\n\nPRÓXIMO FOCO\n${objective}\n\nA autoavaliação mostra sua percepção; o Scout mostra como as escolhas aparecem no jogo. Vamos usar os dois para orientar sua evolução.`;
-      return{ready:true,message,reading,events,validated,weakest,strongest};
+      const practical=studentPracticalScoutText(reading,weakest,events,validated);
+      const diag=studentCauseDiagnosis(sid);
+      const positive=diag?.studentPositive||`Você demonstra confiança em ${strongest} (${scoreText(auto[strongest])}/10).`;
+      const limiter=diag?.studentLimiter?`${diag.studentLimiter} ${practical.observed}`:practical.observed;
+      const next=diag?.studentNextFocus||practical.focus;
+      const message=`Oi, ${firstName(st?.name)}! Segue sua devolutiva BeachFlow.\n\nO QUE VOCÊ FAZ BEM\n${positive}\n\nPRINCIPAL LIMITADOR\n${limiter}\n\nFOCO DA PRÓXIMA AULA\n${next}\n\nSua autoavaliação mostra como você se percebe. O Scout mostra como suas escolhas aparecem no jogo. Vamos cruzar os dois para evoluir com mais clareza.`;
+      return{ready:true,message,reading,events,validated,weakest,strongest,diag};
     }
     function openStudentScoutReport(sid){
       const st=student(sid),report=studentScoutReport(sid);
@@ -1877,7 +2050,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       sendScoutReport.onclick=()=>openZap(report.message,st?.phone);
       copyScoutReport.onclick=()=>navigator.clipboard?.writeText(report.message).then(()=>toast("Relatório copiado."));
     }
-    function renderStudents(){profileSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)} · ${esc(s.level)}</option>`).join("");blindSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)}</option>`).join("");const s=student(state.selected)||state.students[0];if(!s){profile.innerHTML=`<div class="empty">Nenhum aluno cadastrado ainda. Use o botão + Aluno para começar com seus próprios dados.</div>`;blindSliders.innerHTML="";reveal.classList.add("hidden");return}const sc=studentRadarScores(s.id),w=weak(sc),st=strong(sc),due=state.payments.filter(p=>p.student_id===s.id&&p.status!=="pago"),atts=state.attendance.filter(a=>a.student_id===s.id),pres=atts.filter(a=>a.present).length,abs=atts.filter(a=>!a.present).length,ss=scoutSummary(s.id),scoutPlanContext=studentScoutPlanContext(s.id,w),pl=plan({student:s,focus:w,aiContext:scoutPlanContext}),hasTeacher=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="teacher"),hasBlind=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="student_blind"),hasContextualScout=state.scout_events.some(e=>e.student_id===s.id&&e.inferred_intention),canReport=hasBlind&&hasContextualScout,technicalLabel=hasTeacher?"Avaliação técnica do professor":hasBlind?"Hipótese técnica pela autoavaliação":"Referência técnica sem nota",planLabel=scoutPlanContext?"Plano orientado pelo Scout validado":"Plano a validar em quadra";profile.innerHTML=`<div class="stats"><article class="card stat"><span>⌖</span><strong class="text-glow">${esc(w)}</strong><p>Foco técnico</p></article><article class="card stat"><span>↗</span><strong>${esc(st)}</strong><p>Ponto percebido</p></article><article class="card stat"><span>$</span><strong>${due.length}</strong><p>Pendências</p></article></div><div class="callout"><strong>${esc(s.name)}</strong><p class="muted" style="line-height:1.45">${esc(s.level)} · ${esc(s.phone||"sem WhatsApp")} · ${pres} presença(s), ${abs} falta(s) · ${ss.total} ação(ões) no Scout</p></div><div class="radar">${Object.values(sc).some(Boolean)?radarSvg(sc):'<div class="empty">Sem avaliação técnica.</div>'}</div>${studentEvaluationHtml(s.id)}${studentBehaviorHtml(s.id)}<div class="callout"><p class="eyebrow" style="color:var(--primary)">${esc(planLabel)}</p><p class="muted" style="line-height:1.45;margin:.4rem 0"><strong>${esc(technicalLabel)}:</strong> ${esc(w)} (${scoreText(displayScore(s.id,w).score)}/10).</p><h3 class="display" style="font-size:1rem;margin-top:.4rem">${esc(pl.title)}</h3><p class="muted" style="line-height:1.45">${esc(pl.why)}${scoutPlanContext?" O problema confirmado no jogo tem prioridade; o gap técnico permanece visível como hipótese paralela.":" O Ciclo IA da turma cruza esta base com a evidência de jogo do Scout."}</p></div><div class="form"><button class="btn primary" id="studentReport" ${canReport?"":"disabled"}>Relatório para o aluno</button>${canReport?"":`<p class="muted" style="font-size:.76rem;line-height:1.4;margin:0">O relatório será liberado quando houver autoavaliação e ações individuais no Scout.</p>`}<button class="btn outline" id="openStudentScout">Abrir Scout comportamental</button><button class="btn outline" id="zapPlan">Enviar plano no WhatsApp</button><button class="btn outline" data-create="eval" data-id="${s.id}">Avaliar aluno</button><button class="btn outline" id="editStudentBtn">Editar dados</button>${hasTeacher?`<button class="btn danger" id="deleteTeacherEval">Excluir avaliação professor</button>`:""}${hasBlind?`<button class="btn ghost" id="deleteBlindEval">Excluir autoavaliação</button>`:""}</div>`;const studentReportBtn=document.getElementById("studentReport");if(canReport)studentReportBtn.onclick=()=>openStudentScoutReport(s.id);document.getElementById("zapPlan").onclick=()=>openZap(pl.msg,s.phone);document.getElementById("openStudentScout").onclick=()=>{state.page="scout";save();render();toast("O Scout mostra comportamento sem alterar a nota técnica.")};document.getElementById("editStudentBtn").onclick=()=>openCreate("student",s.id);const delTeacher=document.getElementById("deleteTeacherEval"),delBlind=document.getElementById("deleteBlindEval");if(delTeacher)delTeacher.onclick=()=>deleteStudentEvaluations(s.id,"teacher");if(delBlind)delBlind.onclick=()=>deleteStudentEvaluations(s.id,"student_blind");const zapSA=document.getElementById("zapSelfAssess");if(zapSA)zapSA.onclick=()=>openZap(selfAssessMessage(s.id),s.phone);wireCreates();renderBlind()}
+    function renderStudents(){profileSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)} · ${esc(s.level)}</option>`).join("");blindSelect.innerHTML=state.students.map(s=>`<option value="${s.id}" ${s.id===state.selected?"selected":""}>${esc(s.name)}</option>`).join("");const s=student(state.selected)||state.students[0];if(!s){profile.innerHTML=`<div class="empty">Nenhum aluno cadastrado ainda. Use o botão + Aluno para começar com seus próprios dados.</div>`;blindSliders.innerHTML="";reveal.classList.add("hidden");return}const sc=studentRadarScores(s.id),w=weak(sc),st=strong(sc),due=state.payments.filter(p=>p.student_id===s.id&&p.status!=="pago"),atts=state.attendance.filter(a=>a.student_id===s.id),pres=atts.filter(a=>a.present).length,abs=atts.filter(a=>!a.present).length,ss=scoutSummary(s.id),scoutPlanContext=studentScoutPlanContext(s.id,w),pl=plan({student:s,focus:w,aiContext:scoutPlanContext}),hasTeacher=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="teacher"),hasBlind=state.evals.some(e=>e.student_id===s.id&&e.evaluator==="student_blind"),hasContextualScout=state.scout_events.some(e=>e.student_id===s.id&&e.inferred_intention),canReport=hasBlind&&hasContextualScout,technicalLabel=hasTeacher?"Avaliação técnica do professor":hasBlind?"Hipótese técnica pela autoavaliação":"Referência técnica sem nota",planLabel=scoutPlanContext?"Plano orientado pelo Scout validado":"Plano a validar em quadra";profile.innerHTML=`<div class="stats"><article class="card stat"><span>⌖</span><strong class="text-glow">${esc(w)}</strong><p>Foco técnico</p></article><article class="card stat"><span>↗</span><strong>${esc(st)}</strong><p>Ponto percebido</p></article><article class="card stat"><span>$</span><strong>${due.length}</strong><p>Pendências</p></article></div><div class="callout"><strong>${esc(s.name)}</strong><p class="muted" style="line-height:1.45">${esc(s.level)} · ${esc(s.phone||"sem WhatsApp")} · ${pres} presença(s), ${abs} falta(s) · ${ss.total} ação(ões) no Scout</p></div><div class="radar">${Object.values(sc).some(Boolean)?radarSvg(sc):'<div class="empty">Sem avaliação técnica.</div>'}</div>${studentEvaluationHtml(s.id)}${studentBehaviorHtml(s.id)}${studentCauseHtml(s.id)}<div class="callout"><p class="eyebrow" style="color:var(--primary)">${esc(planLabel)}</p><p class="muted" style="line-height:1.45;margin:.4rem 0"><strong>${esc(technicalLabel)}:</strong> ${esc(w)} (${scoreText(displayScore(s.id,w).score)}/10).</p><h3 class="display" style="font-size:1rem;margin-top:.4rem">${esc(pl.title)}</h3><p class="muted" style="line-height:1.45">${esc(pl.why)}${scoutPlanContext?" O problema confirmado no jogo tem prioridade; o gap técnico permanece visível como hipótese paralela.":" O Ciclo IA da turma cruza esta base com a evidência de jogo do Scout."}</p></div><div class="form"><button class="btn primary" id="studentReport" ${canReport?"":"disabled"}>Relatório para o aluno</button>${canReport?"":`<p class="muted" style="font-size:.76rem;line-height:1.4;margin:0">O relatório será liberado quando houver autoavaliação e ações individuais no Scout.</p>`}<button class="btn outline" id="openStudentScout">Abrir Scout comportamental</button><button class="btn outline" id="zapPlan">Enviar plano no WhatsApp</button><button class="btn outline" data-create="eval" data-id="${s.id}">Avaliar aluno</button><button class="btn outline" id="editStudentBtn">Editar dados</button>${hasTeacher?`<button class="btn danger" id="deleteTeacherEval">Excluir avaliação professor</button>`:""}${hasBlind?`<button class="btn ghost" id="deleteBlindEval">Excluir autoavaliação</button>`:""}</div>`;const studentReportBtn=document.getElementById("studentReport");if(canReport)studentReportBtn.onclick=()=>openStudentScoutReport(s.id);document.getElementById("zapPlan").onclick=()=>openZap(pl.msg,s.phone);document.getElementById("openStudentScout").onclick=()=>{state.page="scout";save();render();toast("O Scout mostra comportamento sem alterar a nota técnica.")};document.getElementById("editStudentBtn").onclick=()=>openCreate("student",s.id);const delTeacher=document.getElementById("deleteTeacherEval"),delBlind=document.getElementById("deleteBlindEval");if(delTeacher)delTeacher.onclick=()=>deleteStudentEvaluations(s.id,"teacher");if(delBlind)delBlind.onclick=()=>deleteStudentEvaluations(s.id,"student_blind");wireCreates();renderBlind()}
     function renderBlind(){
   const sid=blindSelect.value||state.selected||state.students[0]?.id;
   const st=student(sid);
@@ -1911,7 +2084,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       <button class="btn ghost" id="resendSelfAssess">Reenviar link de autoavaliação</button>`;
     reveal.classList.add("hidden");
     const resendBtn=document.getElementById("resendSelfAssess");
-    if(resendBtn&&st)resendBtn.onclick=()=>openZap(selfAssessMessage(sid),st.phone);
+    if(resendBtn&&st)resendBtn.onclick=async()=>{try{openZap(await prepareSelfAssessMessage(sid),st.phone)}catch(err){toast(err.message)}};
   } else {
     // Aluno ainda não respondeu — tenta sincronizar do Supabase primeiro
     if(badge){badge.textContent="Aguardando resposta";badge.className="badge warn"}
@@ -1924,32 +2097,46 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       </div>`;
     reveal.classList.add("hidden");
     const sendBtn=document.getElementById("sendSelfAssessBtn");
-    if(sendBtn&&st)sendBtn.onclick=()=>openZap(selfAssessMessage(sid),st.phone);
+    if(sendBtn&&st)sendBtn.onclick=async()=>{try{openZap(await prepareSelfAssessMessage(sid),st.phone)}catch(err){toast(err.message)}};
   }
 }
     function renderClasses(){classes.innerHTML=state.classes.sort((a,b)=>a.weekday-b.weekday||a.start.localeCompare(b.start)).map(classCard).join("")||`<div class="empty">Nenhuma turma cadastrada. Crie uma turma para começar.</div>`;classes.querySelectorAll("[data-class]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-edit]"))return;openClass(c.dataset.class)});const ids=state.students.map(s=>s.id),av=avg(ids),hasRadar=hasTeacherRadar(ids);radar.innerHTML=hasRadar&&Object.values(av).some(Boolean)?radarSvg(av):`<div class="empty">Faça uma avaliação técnica ou receba uma autoavaliação para liberar o radar.</div>`;if(!state.students.length||!hasRadar){ai.innerHTML=`<p class="eyebrow" style="color:var(--primary)">Ciclo IA</p><div class="empty">A IA ainda não tem dados reais desta conta. Cadastre alunos e salve uma avaliação ou autoavaliação para gerar um ciclo a partir do radar.</div>`;return}const wk=weak(av),theme=cycleTheme({fundamento_app:wk,scout_validado:false});ai.innerHTML=`<p class="eyebrow" style="color:var(--primary)">Hipótese do próximo ciclo</p><h2 class="display" style="font-size:1.25rem;margin-top:.45rem">${esc(theme.title)}</h2><div class="callout"><span class="badge">⌖ ${esc(wk)}</span><p style="line-height:1.45;font-weight:850">${esc(theme.note)}</p><p class="muted" style="line-height:1.45;margin:.5rem 0 0">Abra uma turma para escolher a duração, gerar as aulas do ciclo e definir o Scout de validação.</p></div><button class="btn primary" id="applyFocus" style="width:100%;margin-top:.75rem">Aplicar referência às turmas de hoje</button>`;document.getElementById("applyFocus").onclick=()=>{todayClasses().forEach(c=>c.focus=wk);save();toast("Referência aplicada. Abra a turma para gerar o ciclo.");render()}}
     function renderPedagogicalMotor(){
       const host=document.getElementById("pedagogicalMotor");if(!host)return;
       // MODO INVISÍVEL: a aba Scout é estritamente de registro. Nenhuma sugestão/feedback técnico durante o jogo.
-      // A inteligência roda em background (Diagnostic Engine) e é consumida na aba Turma.
+      // A inteligência roda em background (Diagnostic Engine) e é consumida na aba Turma → Plano.
       host.innerHTML="";host.classList.add("hidden");return;
-      const p=state.pedagogy,tree=PEDAGOGICAL_TREES[p.treeId],result=evaluatePedagogicalSituation(p.treeId,p.context,p.decision,p.executionIssue);
+      const p=state.pedagogy,result=p.phase&&p.action&&p.result?evaluatePedagogicalSituation(p.phase,p.action,p.result,p.context):null;
       if(state.match&&!p.panelOpen){
-        host.innerHTML=`<div class="row"><div><p class="eyebrow" style="color:var(--primary)">Motor Pedagógico</p><strong>${esc(result?.focus||"Cartão de Foco rápido")}</strong></div><button type="button" class="btn outline" id="openPedagogyPanel">Abrir</button></div>`;
+        host.innerHTML=`<div class="row"><div><p class="eyebrow blue">Scout Expresso</p><strong>${esc(result?.objective||"Cartão de Foco rápido")}</strong></div><button type="button" class="btn outline" id="openPedagogyPanel">Registrar</button></div>`;
         document.getElementById("openPedagogyPanel").onclick=()=>{p.panelOpen=true;save();renderPedagogicalMotor()};
         return;
       }
       const choice=(kind,value,label,selected)=>`<button type="button" class="choice ${selected===value?"sel":""}" data-ped-${kind}="${value}">${esc(label)}</button>`;
-      const execution=result?.ok?(p.executionError===true?`<div class="callout" style="margin-top:0"><div class="row"><p class="label" style="margin:0">Erro de execução</p><button type="button" class="btn ghost" id="cancelExecution">Cancelar</button></div><p style="margin:.6rem 0;font-size:.84rem;font-weight:850">O que falhou?</p><div class="quick3">${TECHNICAL_EXECUTION_OPTIONS.map(([id,label])=>choice("issue",id,label,p.executionIssue)).join("")}</div></div>`:`<button type="button" class="btn ghost" id="reportExecutionError">A decisão foi boa, mas houve erro de execução?</button>`):"";
-      const focus=result?`<div class="focus-card"><div class="row"><p class="eyebrow" style="color:var(--primary)">Cartão de Foco da Aula</p><span class="badge ${result.ok?"":"warn"}">${result.ok?"Coerente":"Ajustar leitura"}</span></div><h3 class="display">${esc(result.focus)}</h3><div class="focus-line"><p class="label">Diagnóstico</p><p>${esc(result.feedback)}</p></div><div class="focus-line"><p class="label">Observar hoje</p><p>${esc(result.observe)}</p></div><div class="focus-line"><p class="label">Dinâmica</p><p>${esc(result.dynamic)}</p></div>${result.executionFeedback?`<div class="copy" style="color:var(--fg)"><strong>${esc(result.executionFeedback)}</strong></div>`:""}<button type="button" class="btn outline" id="expandPedagogy">${p.expanded?"Ocultar sugestões":"Expandir sugestões"}</button>${p.expanded?`<div class="copy"><strong>Pergunta:</strong> ${esc(result.question)}<br><strong>Progressão:</strong> ${esc(result.progression)}</div>`:""}</div>${execution}`:"";
-      host.innerHTML=`<div class="section-head"><div><h2 style="color:var(--fg);font-size:1rem;letter-spacing:0;text-transform:none">Motor Pedagógico</h2><p class="muted" style="margin:.2rem 0 0;font-size:.76rem;font-weight:800">Árvore 01 · 2 toques para definir o foco</p></div>${result?'<button type="button" id="clearPedagogy" class="btn ghost">Limpar</button>':'<span class="badge cyan">MVP</span>'}</div>${state.match?'<button type="button" class="btn ghost" id="closePedagogyPanel">Voltar ao placar</button>':""}<p class="label" style="margin:0">1. Contexto da bola</p><div class="quick3">${tree.contexts.map(([id,label])=>choice("context",id,label,p.context)).join("")}</div><p class="label" style="margin:0">2. Decisão do aluno</p><div class="quick3">${tree.decisions.map(([id,label])=>choice("decision",id,label,p.decision)).join("")}</div>${focus}`;
-      host.querySelectorAll("[data-ped-context]").forEach(b=>b.onclick=()=>{p.context=b.dataset.pedContext;p.executionError=null;p.executionIssue="";p.expanded=false;save();renderPedagogicalMotor()});
-      host.querySelectorAll("[data-ped-decision]").forEach(b=>b.onclick=()=>{p.decision=b.dataset.pedDecision;p.executionError=null;p.executionIssue="";p.expanded=false;save();renderPedagogicalMotor()});
-      host.querySelectorAll("[data-ped-issue]").forEach(b=>b.onclick=()=>{p.executionIssue=b.dataset.pedIssue;save();renderPedagogicalMotor()});
-      const reportExecution=document.getElementById("reportExecutionError");if(reportExecution)reportExecution.onclick=()=>{p.executionError=true;p.executionIssue="";save();renderPedagogicalMotor()};
-      const cancelExecution=document.getElementById("cancelExecution");if(cancelExecution)cancelExecution.onclick=()=>{p.executionError=null;p.executionIssue="";save();renderPedagogicalMotor()};
-      const expand=document.getElementById("expandPedagogy");if(expand)expand.onclick=()=>{p.expanded=!p.expanded;save();renderPedagogicalMotor()};
-      const clear=document.getElementById("clearPedagogy");if(clear)clear.onclick=()=>{state.pedagogy={treeId:p.treeId,context:"",decision:"",executionError:null,executionIssue:"",expanded:false,panelOpen:p.panelOpen};save();renderPedagogicalMotor()};
+      const label=(items,value)=>items.find(([id])=>id===value)?.[1]||"";
+      const execution=p.closedMode?`<div class="callout closed-mode"><p class="eyebrow">Modo fechado</p><p class="muted" style="margin:.2rem 0 .55rem">Correção técnica rápida. Ao tocar em uma causa, o app volta para o fluxo anterior.</p><div class="quick3">${TECHNICAL_EXECUTION_OPTIONS.map(([id,text])=>choice("issue",id,text,p.executionIssue)).join("")}</div></div>`:"";
+      const summary=result?`<div class="express-summary"><span class="badge cyan">${esc(label(EXPRESS_PHASES,p.phase))}</span><span class="badge cyan">${esc(label(EXPRESS_ACTIONS,p.action))}</span><span class="badge cyan">${esc(label(EXPRESS_RESULTS,p.result))}</span>${p.context?`<span class="badge warn">${esc(label(EXPRESS_CONTEXTS,p.context))}</span>`:""}</div>`:"";
+      const last=result?`<div class="focus-card"><div class="row"><p class="eyebrow green">Último foco</p><span class="badge cyan">${esc(result.initial_format)}</span></div><div class="focus-line"><p class="label">FOCO</p><h3 class="display">${esc(result.microFocus)}</h3></div><div class="focus-line"><p class="label">REGRA</p><p><strong>${esc(result.microRule)}</strong></p></div><p class="muted" style="margin:0;line-height:1.35">${esc(result.microWatch)}</p><button type="button" class="btn outline" id="expandPedagogy">${p.expanded?"Ocultar treino completo":"Ver treino completo"}</button>${p.expanded?`<div class="copy"><strong>Leitura:</strong> ${esc(result.inferred_behavior)}<br><strong>Critério:</strong> ${esc(result.observable_criteria)}<br><strong>Dinâmica:</strong> ${esc(result.dynamic)}<br><strong>Regressão:</strong> ${esc(result.regression)}<br><strong>Progressão:</strong> ${esc(result.progression)}</div>`:""}</div>`:"";
+      const pedToast=p.toast&&Date.now()<p.toast.until?`<div class="ped-toast"><p class="eyebrow green">Cartão de Foco</p><h3 class="display" style="font-size:1.05rem">${esc(p.toast.microFocus)}</h3><p><b>REGRA:</b> ${esc(p.toast.microRule)}</p>${p.toast.microWatch?`<p>${esc(p.toast.microWatch)}</p>`:""}</div>`:"";
+      const entry=`<div class="express-step"><p class="label" style="margin:0">Fase do ponto</p><div class="phase-tabs">${EXPRESS_PHASES.map(([id,text])=>choice("phase",id,text,p.phase)).join("")}</div></div><div class="express-step"><p class="label" style="margin:0">Toque 1 · ação observável</p><div class="action-grid">${EXPRESS_ACTIONS.map(([id,text])=>choice("action",id,text,p.action)).join("")}</div></div>${p.action?`<div class="express-step"><p class="label" style="margin:0">Toque 2 · resultado</p><div class="grid2">${EXPRESS_RESULTS.map(([id,text])=>choice("result",id,text,p.result)).join("")}</div></div>`:""}<div class="express-step"><p class="label" style="margin:0">Contexto opcional</p><div class="context-strip">${EXPRESS_CONTEXTS.map(([id,text])=>choice("context",id,text,p.context)).join("")}</div></div>`;
+      // O professor toca ação e resultado; a fase fica disponível como ajuste rápido, sem virar formulário.
+      host.innerHTML=`${pedToast}<div class="section-head"><div><h2 style="color:var(--fg);font-size:1rem;letter-spacing:0;text-transform:none">Scout Expresso</h2><p class="muted" style="margin:.2rem 0 0;font-size:.76rem;font-weight:800">Fase + ação · resultado</p></div><span class="badge cyan">${result?"Inferido":"2 toques"}</span></div>${state.match?'<button type="button" class="btn ghost" id="closePedagogyPanel">Voltar ao placar</button>':""}${entry}${last}${execution}<div class="inline-actions"><button type="button" class="btn outline" id="closedMode">Modo fechado</button><button type="button" class="btn ghost" id="newPedagogy">Limpar</button></div>`;
+      const recordPattern=(eventName)=>{
+        const current=evaluatePedagogicalSituation(p.phase,p.action,p.result,p.context);
+        if(!current)return;
+        state.pedagogyHistory=[{phase:p.phase,action:p.action,result:p.result,context:p.context,inferred_behavior:current.inferred_behavior,confidence:current.confidence,created_at:new Date().toISOString()},...(state.pedagogyHistory||[])].slice(0,100);
+        p.toast={microFocus:current.microFocus,microRule:current.microRule,microWatch:current.microWatch,until:Date.now()+8000};
+        save();
+        trackUsage(eventName,{phase:p.phase,action:p.action,result:p.result,context:p.context,inferred_behavior:current.inferred_behavior,format:current.initial_format},p.startedAt?Date.now()-p.startedAt:null,p.touches||2);
+      };
+      host.querySelectorAll("[data-ped-phase]").forEach(b=>b.onclick=()=>{p.phase=b.dataset.pedPhase;save();trackUsage("express_phase_selected",{phase:p.phase},null,1);renderPedagogicalMotor()});
+      host.querySelectorAll("[data-ped-action]").forEach(b=>b.onclick=()=>{p.action=b.dataset.pedAction;p.result="";p.expanded=false;p.touches=1;p.startedAt=Date.now();save();trackUsage("express_action_selected",{phase:p.phase,action:p.action},null,1);renderPedagogicalMotor()});
+      host.querySelectorAll("[data-ped-result]").forEach(b=>b.onclick=()=>{p.result=b.dataset.pedResult;p.touches=(p.touches||1)+1;recordPattern("pedagogic_toast_view");p.startedAt=null;p.touches=0;save();renderPedagogicalMotor();setTimeout(()=>{if(state.pedagogy?.toast&&Date.now()>=state.pedagogy.toast.until){state.pedagogy.toast=null;save();renderPedagogicalMotor()}},8200)});
+      host.querySelectorAll("[data-ped-context]").forEach(b=>b.onclick=()=>{p.context=p.context===b.dataset.pedContext?"":b.dataset.pedContext;save();trackUsage("express_context_optional",{context:p.context||"clear"});renderPedagogicalMotor()});
+      host.querySelectorAll("[data-ped-issue]").forEach(b=>b.onclick=()=>{p.executionIssue=b.dataset.pedIssue;p.closedMode=false;save();trackUsage("closed_mode_correction",{issue:p.executionIssue});toast("Correção técnica registrada. Voltando ao fluxo.");renderPedagogicalMotor()});
+      const expand=document.getElementById("expandPedagogy");if(expand)expand.onclick=()=>{p.expanded=!p.expanded;save();if(p.expanded)trackUsage("focus_suggestions_expanded",{phase:p.phase,action:p.action});renderPedagogicalMotor()};
+      const fresh=document.getElementById("newPedagogy");if(fresh)fresh.onclick=()=>{state.pedagogy={phase:p.phase||"development",action:"",result:"",context:"",executionIssue:"",expanded:false,panelOpen:p.panelOpen,closedMode:false,toast:null};save();renderPedagogicalMotor()};
+      const closed=document.getElementById("closedMode");if(closed)closed.onclick=()=>{p.closedMode=!p.closedMode;save();trackUsage("closed_mode_opened",{active:p.closedMode});renderPedagogicalMotor()};
       const closePanel=document.getElementById("closePedagogyPanel");if(closePanel)closePanel.onclick=()=>{p.panelOpen=false;save();renderPedagogicalMotor()};
     }
     function scoutRoster(){const cid=scoutClass?.value||"";return cid?studentsFor(cid):state.students}
@@ -1971,14 +2158,14 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       if(roster.length<required)return toast(singles?"Escolha ao menos dois atletas para criar um jogo de simples.":"Esta turma precisa de pelo menos quatro alunos para criar scout de duplas.");
       const a=singles?[a1.value]:[a1.value,a2.value],b=singles?[b1.value]:[b1.value,b2.value];
       if(new Set([...a,...b]).size<required)return toast(singles?"Escolha dois atletas diferentes.":"Escolha quatro alunos diferentes.");
-      const mode=document.getElementById("scoutMode")?.value||"lesson4",id=supabaseClient&&crypto.randomUUID?crypto.randomUUID():uid();
+      const mode=document.getElementById("scoutMode")?.value||"lesson4",id=recordId();
       state.match={id,class_id:scoutClass?.value||"",title:matchTitle.value||"Partida ao vivo",game_type:gameType,a,b,mode,scoreState:initialScoutScore(mode),points:[],tab:"points",ended:false,ended_at:null};
       state.pedagogy.panelOpen=false;
       state.draftPoint={server:a[0],serve_side:"Direita",winner:"a",outcome:"Winner",technique:"",zone:"",final_player:""};
-      save();syncPushScoutMatch(state.match);toast(`Scout de ${scoutGameLabel(state.match).toLowerCase()} iniciado.`);render();
+      save();syncPushScoutMatch(state.match);trackUsage("scout_started",{game_type:gameType,mode});toast(`Scout de ${scoutGameLabel(state.match).toLowerCase()} iniciado.`);render();
     }
     function archiveScoutMatch(m){if(!m)return;state.scoutHistory=[JSON.parse(JSON.stringify(m)),...(state.scoutHistory||[]).filter(x=>x.id!==m.id)].slice(0,50)}
-    function finishScoutMatch(){const m=state.match;if(!m||!m.points?.length)return toast("Registre ao menos um ponto antes de encerrar.");if(!confirm("Encerrar este scout e salvar no histórico?"))return;m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m);save();syncPushScoutMatch(m);toast("Scout encerrado e salvo no histórico.");render()}
+    function finishScoutMatch(){const m=state.match;if(!m||!m.points?.length)return toast("Registre ao menos um ponto antes de encerrar.");if(!confirm("Encerrar este scout e salvar no histórico?"))return;m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m);save();syncPushScoutMatch(m);trackUsage("scout_finished",{game_type:scoutGameLabel(m),points:m.points.length});toast("Scout encerrado e salvo no histórico.");render()}
     function startNewScoutMatch(){const m=state.match;if(m?.points?.length&&!m.ended){if(!confirm("Criar nova partida encerra e salva o Scout atual. Continuar?"))return;m.ended=true;m.ended_at=new Date().toISOString();archiveScoutMatch(m);syncPushScoutMatch(m)}state.match=null;state.draftPoint={};save();render()}
     function openScoutHistory(id){const m=(state.scoutHistory||[]).find(x=>x.id===id);if(!m)return;state.match=JSON.parse(JSON.stringify(m));state.match.tab="analysis";save();render()}
     const SCOUT_OUTCOMES=["Winner","Erro não forçado","Forçou o erro","Ace","Erro de saque","Erro de devolução"];
@@ -2039,8 +2226,8 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     function teamsHtml(m){const singles=scoutIsSingles(m),unit=singles?"atleta":"dupla";return`<div class="callout"><strong>${singles?"Leitura por lado":"Leitura coletiva"}</strong><p class="muted">${singles?"Cada atleta é analisado":"A dupla é analisada"} pela intenção, risco e transição que aparece nas ações registradas.</p></div>${["a","b"].map(side=>{const actions=teamActions(m,side),a=semanticScope(actions),lostServe=m.points.filter(p=>p.server_team===side&&p.winner_team!==side).length;return`<div class="card pad" style="margin-top:.75rem"><p class="eyebrow" style="color:var(--primary)">${esc(unit)} ${side.toUpperCase()}</p><strong>${esc(team(m[side]))}</strong><p class="muted" style="margin:.45rem 0 0">${esc(a.profile)} · ${esc(a.confidence)}<br>${esc(a.diagnosis)}<br>Perdas no saque: ${lostServe} · Intenção dominante: ${esc(a.topIntent)}</p><p class="label" style="margin-top:.8rem">Transição para treinar</p><strong>${esc(a.transition)}</strong>${semanticRadarHtml(a.radar,a.radarVolume)}</div>`}).join("")}`}
     function playersHtml(m){return`<div class="callout"><strong>Perfis individuais</strong><p class="muted">A leitura aparece quando o executor é informado no ponto. Ela descreve comportamento, não substitui avaliação técnica.</p></div>${[...m.a,...m.b].map(id=>{const ps=m.points.filter(p=>(p.final_player_id||p.finisher)===id),a=semanticScope(ps);return`<div class="card pad" style="margin-top:.75rem"><p class="eyebrow" style="color:var(--primary)">${esc(student(id)?.name||"Aluno")}</p><strong>${esc(a.profile)}</strong><p class="muted" style="margin:.4rem 0 0">${esc(a.diagnosis)} · ${esc(a.confidence)}<br>${esc(a.transition)}</p>${semanticRadarHtml(a.radar,a.radarVolume)}</div>`}).join("")}`}
     function renderFinance(){const paid=state.payments.filter(p=>p.status==="pago").reduce((s,p)=>s+ +p.amount,0),due=state.payments.filter(p=>p.status!=="pago"),goal=Math.min(100,Math.round(paid/GOAL*100));finPaid.textContent=money(paid).replace(",00","");finDue.textContent=due.length;finGoal.textContent=goal+"%";monthRevenue.textContent=money(paid);finProgress.style.width=goal+"%";debts.innerHTML=due.length?due.map(p=>{const s=student(p.student_id);return`<div class="item" style="grid-template-columns:1fr auto"><div><strong>${esc(s?.name)}</strong><p class="muted" style="margin:.2rem 0 0">${money(p.amount)} · venc. ${p.due}</p></div><div class="row"><button class="btn icon primary" data-pay="${p.id}">✓</button><button class="btn ghost" data-charge="${p.id}">Cobrar</button></div></div>`}).join(""):`<div class="empty">Sem inadimplências. Bom treino! 💚</div>`;debts.querySelectorAll("[data-pay]").forEach(b=>b.onclick=()=>{state.payments.find(p=>p.id===b.dataset.pay).status="pago";save();toast("Mensalidade paga.");render()});debts.querySelectorAll("[data-charge]").forEach(b=>b.onclick=()=>openCharge(b.dataset.charge))}
-    function openPoint(){const m=state.match,s=ensureScoutState(m),players=scoutParticipants(m),singles=scoutIsSingles(m),fixedServer=currentScoutServer(m),suggested=(fixedServer||scoutServerOptions(m)[0]||players[0]),old=state.draftPoint||{};state.draftPoint={server:fixedServer||old.server||suggested,serve_side:old.serve_side||"Direita",winner:old.winner||"a",outcome:old.outcome||"Winner",technique:old.technique||"",zone:old.zone||"",final_player:old.final_player||""};const d=state.draftPoint,serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque",ch=(g,v,label=student(v)?.name||v)=>`<button class="choice ${d[g]===v?"sel":""}" data-choice="${g}" data-val="${esc(v)}">${esc(label)}</button>`,serverChoices=fixedServer?[fixedServer]:scoutServerOptions(m),intent=serveEvent?"Neutro":(d.technique?inferIntention(d.technique,d.outcome,d.zone):"--");pointForm.innerHTML=`<div class="callout"><strong>${team(m.a)} ${s.games.a} x ${s.games.b} ${team(m.b)}</strong><p class="muted" style="margin:.3rem 0 0">${esc(scoutGameLabel(m))} · ${scoutScoreText(s)} · ${scoutDeciding(s)?"Ponto decisivo":"Game em andamento"}</p></div><p class="label">Sacador ${fixedServer?"· rotação automática":""}</p><div class="grid2">${serverChoices.map(id=>ch("server",id)).join("")}</div><p class="label">Posição do saque</p><div class="grid2">${["Direita","Centro","Esquerda"].map(x=>ch("serve_side",x,x)).join("")}</div><p class="label">Quem venceu o ponto?</p><div class="grid2">${ch("winner","a",singles?"Atleta A":"Dupla A")}${ch("winner","b",singles?"Atleta B":"Dupla B")}</div><p class="label">Como terminou?</p><div class="grid2">${SCOUT_OUTCOMES.map(x=>ch("outcome",x,x)).join("")}</div>${serveEvent?`<div class="callout"><strong>Evento de saque</strong><p class="muted" style="margin:.35rem 0 0">Técnica e intenção serão salvas automaticamente como Saque · Neutro.</p></div>`:`<p class="label">Técnica principal</p><div class="grid2">${SCOUT_TECHNIQUES.map(x=>ch("technique",x,x)).join("")}</div><p class="label">Zona <span class="muted">(opcional)</span></p><div class="grid2">${["Verde","Amarela","Vermelha"].map(x=>ch("zone",x,x)).join("")}</div><p class="label">Executor <span class="muted">(opcional)</span></p><div class="grid2">${players.map(id=>ch("final_player",id)).join("")}</div><div class="callout"><strong>Intenção inferida: ${esc(intent)}</strong><p class="muted" style="margin:.35rem 0 0">O sistema interpreta o contexto; o professor registra apenas o que viu.</p></div>`}<button id="savePoint" class="btn primary">Salvar ponto</button>`;pointModal.classList.add("open");pointForm.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{state.draftPoint[b.dataset.choice]=b.dataset.val;openPoint()});savePoint.onclick=savePointFn}
-    function savePointFn(){const m=state.match,d=state.draftPoint,s=ensureScoutState(m),serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque";if(!d.server||!d.serve_side||!d.winner||!d.outcome)return toast("Marque saque, vencedor e desfecho.");if(!serveEvent&&!d.technique)return toast("Marque a técnica principal.");const before=JSON.parse(JSON.stringify(s)),technique=serveEvent?"Saque":d.technique,intention=inferIntention(technique,d.outcome,d.zone),executor=serveEvent?d.server:(d.final_player||""),executorTeam=executor?teamOf(executor):"",serverTeam=teamOf(d.server),dbId=()=>supabaseClient&&crypto.randomUUID?crypto.randomUUID():uid();if(!currentScoutServer(m)&&!s.serveRotation[s.serverGameIndex])s.serveRotation.push(d.server);m.scoreState=applyScoutWinner(s,d.winner);const after=m.scoreState,point={id:dbId(),point_number:m.points.length+1,set_number:before.set_number,server_id:d.server,server_name:student(d.server)?.name||"",server_team:serverTeam,serve_side:d.serve_side,winner_team:d.winner,outcome:d.outcome,technique,inferred_intention:intention,zone:serveEvent?"":d.zone,final_player_id:executor,final_player_name:student(executor)?.name||"",final_player_team:executorTeam,score_before:scoutScoreText(before),score_after:scoutScoreText(after),games_before:`${before.games.a}x${before.games.b}`,games_after:`${after.games.a}x${after.games.b}`,sets_before:`${before.sets.a}x${before.sets.b}`,sets_after:`${after.sets.a}x${after.sets.b}`,is_deciding_point:scoutDeciding(before),is_tiebreak:before.tie,is_super_tiebreak:before.superTie,created_at:new Date().toISOString()};point.tactical_issue=tacticalIssue(point);m.points.push(point);let event=null;if(executor){const fund=shotFund(technique,d.outcome),kind=outcomeKind(d.outcome),score=kind==="winner"?9:kind==="error"?3:8;event={id:dbId(),student_id:executor,fundamental:fund,kind,score,outcome:d.outcome,shot:technique,technique,inferred_intention:intention,tactical_issue:point.tactical_issue,zone:point.zone,is_deciding_point:point.is_deciding_point,is_tiebreak:point.is_tiebreak,is_super_tiebreak:point.is_super_tiebreak,note:`${d.outcome} em ${technique}${point.zone?" (Zona "+point.zone+")":""}. ${point.tactical_issue||""}`,created:new Date().toISOString()};state.scout_events.unshift(event)}if(after.finished){m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m)}state.draftPoint={};save();syncPushScoutMatch(m);syncPushScoutPoint(point,m);if(event)syncPushScoutEvent(event,m);closeAll();toast(after.finished?"Partida encerrada e salva no histórico.":point.tactical_issue?"Ponto registrado com alerta contextual.":"Ponto registrado e contexto interpretado.");render()}
+    function openPoint(){const m=state.match,s=ensureScoutState(m),players=scoutParticipants(m),singles=scoutIsSingles(m),fixedServer=currentScoutServer(m),suggested=(fixedServer||scoutServerOptions(m)[0]||players[0]),old=state.draftPoint||{};if(!state.usageFlow||state.usageFlow.kind!=="scout_point"){state.usageFlow={kind:"scout_point",startedAt:Date.now(),touches:1};trackUsage("scout_register_open",{game_type:scoutGameLabel(m)},null,1)}state.draftPoint={server:fixedServer||old.server||suggested,serve_side:old.serve_side||"Direita",winner:old.winner||"a",outcome:old.outcome||"Winner",technique:old.technique||"",zone:old.zone||"",final_player:old.final_player||""};const d=state.draftPoint,serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque",ch=(g,v,label=student(v)?.name||v)=>`<button class="choice ${d[g]===v?"sel":""}" data-choice="${g}" data-val="${esc(v)}">${esc(label)}</button>`,serverChoices=fixedServer?[fixedServer]:scoutServerOptions(m),intent=serveEvent?"Neutro":(d.technique?inferIntention(d.technique,d.outcome,d.zone):"--");pointForm.innerHTML=`<div class="callout"><strong>${team(m.a)} ${s.games.a} x ${s.games.b} ${team(m.b)}</strong><p class="muted" style="margin:.3rem 0 0">${esc(scoutGameLabel(m))} · ${scoutScoreText(s)} · ${scoutDeciding(s)?"Ponto decisivo":"Game em andamento"}</p></div><p class="label">Sacador ${fixedServer?"· rotação automática":""}</p><div class="grid2">${serverChoices.map(id=>ch("server",id)).join("")}</div><p class="label">Posição do saque</p><div class="grid2">${["Direita","Centro","Esquerda"].map(x=>ch("serve_side",x,x)).join("")}</div><p class="label">Quem venceu o ponto?</p><div class="grid2">${ch("winner","a",singles?"Atleta A":"Dupla A")}${ch("winner","b",singles?"Atleta B":"Dupla B")}</div><p class="label">Como terminou?</p><div class="grid2">${SCOUT_OUTCOMES.map(x=>ch("outcome",x,x)).join("")}</div>${serveEvent?`<div class="callout"><strong>Evento de saque</strong><p class="muted" style="margin:.35rem 0 0">Técnica e intenção serão salvas automaticamente como Saque · Neutro.</p></div>`:`<p class="label">Técnica principal</p><div class="grid2">${SCOUT_TECHNIQUES.map(x=>ch("technique",x,x)).join("")}</div><p class="label">Zona <span class="muted">(opcional)</span></p><div class="grid2">${["Verde","Amarela","Vermelha"].map(x=>ch("zone",x,x)).join("")}</div><p class="label">Executor <span class="muted">(opcional)</span></p><div class="grid2">${players.map(id=>ch("final_player",id)).join("")}</div><div class="callout"><strong>Intenção inferida: ${esc(intent)}</strong><p class="muted" style="margin:.35rem 0 0">O sistema interpreta o contexto; o professor registra apenas o que viu.</p></div>`}<button id="savePoint" class="btn primary">Salvar ponto</button>`;pointModal.classList.add("open");pointForm.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{state.usageFlow.touches=(state.usageFlow.touches||1)+1;state.draftPoint[b.dataset.choice]=b.dataset.val;openPoint()});savePoint.onclick=savePointFn}
+    function savePointFn(){const m=state.match,d=state.draftPoint,s=ensureScoutState(m),serveEvent=d.outcome==="Ace"||d.outcome==="Erro de saque";if(!d.server||!d.serve_side||!d.winner||!d.outcome)return toast("Marque saque, vencedor e desfecho.");if(!serveEvent&&!d.technique)return toast("Marque a técnica principal.");const before=JSON.parse(JSON.stringify(s)),technique=serveEvent?"Saque":d.technique,intention=inferIntention(technique,d.outcome,d.zone),executor=serveEvent?d.server:(d.final_player||""),executorTeam=executor?teamOf(executor):"",serverTeam=teamOf(d.server);if(!currentScoutServer(m)&&!s.serveRotation[s.serverGameIndex])s.serveRotation.push(d.server);m.scoreState=applyScoutWinner(s,d.winner);const after=m.scoreState,point={id:recordId(),point_number:m.points.length+1,set_number:before.set_number,server_id:d.server,server_name:student(d.server)?.name||"",server_team:serverTeam,serve_side:d.serve_side,winner_team:d.winner,outcome:d.outcome,technique,inferred_intention:intention,zone:serveEvent?"":d.zone,final_player_id:executor,final_player_name:student(executor)?.name||"",final_player_team:executorTeam,score_before:scoutScoreText(before),score_after:scoutScoreText(after),games_before:`${before.games.a}x${before.games.b}`,games_after:`${after.games.a}x${after.games.b}`,sets_before:`${before.sets.a}x${before.sets.b}`,sets_after:`${after.sets.a}x${after.sets.b}`,is_deciding_point:scoutDeciding(before),is_tiebreak:before.tie,is_super_tiebreak:before.superTie,created_at:new Date().toISOString()};point.tactical_issue=tacticalIssue(point);Object.assign(point,operationalFromScoutPoint(point));m.points.push(point);let event=null;if(executor){const fund=shotFund(technique,d.outcome),kind=outcomeKind(d.outcome),score=kind==="winner"?9:kind==="error"?3:8;event={id:recordId(),student_id:executor,fundamental:fund,kind,score,outcome:d.outcome,shot:technique,technique,inferred_intention:intention,tactical_issue:point.tactical_issue,zone:point.zone,is_deciding_point:point.is_deciding_point,is_tiebreak:point.is_tiebreak,is_super_tiebreak:point.is_super_tiebreak,note:`${d.outcome} em ${technique}${point.zone?" (Zona "+point.zone+")":""}. ${point.tactical_issue||""}`,created:new Date().toISOString()};state.scout_events.unshift(event)}if(after.finished){m.ended=true;m.ended_at=m.ended_at||new Date().toISOString();archiveScoutMatch(m)}const flow=state.usageFlow;state.usageFlow=null;state.draftPoint={};save();syncPushScoutMatch(m);syncPushScoutPoint(point,m);if(event)syncPushScoutEvent(event,m);trackUsage("scout_point_saved",{outcome:point.outcome,technique:point.technique,zone:point.zone||"Sem zona",inferred_behavior:point.inferred_behavior||""},flow?.startedAt?Date.now()-flow.startedAt:null,flow?.touches||null);closeAll();toast(after.finished?"Partida encerrada e salva no histórico.":point.inferred_behavior?`Ponto registrado: ${point.inferred_behavior}`:point.tactical_issue?"Ponto registrado com alerta contextual.":"Ponto registrado e contexto interpretado.");render()}
     async function refreshRemoteConfirmations(cid){
       if(!supabaseClient)return;
       const s=session(cid);
@@ -2078,19 +2265,20 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
         const scoutImpactHtml=ids.length?classScoutImpactHtml(ids,aiContext):"";
         const current=state.cycles[id]||null,duration=current?.duration||2;
         const durationControl=`<label class="label">Duração do ciclo<select id="cycleDuration" class="select"><option value="1" ${duration===1?"selected":""}>1 semana</option><option value="2" ${duration===2?"selected":""}>2 semanas · recomendado</option><option value="3" ${duration===3?"selected":""}>3 semanas</option><option value="4" ${duration===4?"selected":""}>4 semanas</option></select></label>`;
+        const supportPanel=cycleSupportPanelHtml(materials,diagnosticHtml,scoutImpactHtml,durationControl);
         if(!ids.length||!hasTeacherRadar(ids)){
-          aiPane.innerHTML=`${gerarPlanoDeAulaHtml(id,ids,aiContext)}<details class="bf-completo"><summary>Ver treino completo</summary><div class="form">${materials}${diagnosticHtml}${scoutImpactHtml}${durationControl}<div class="empty">Ainda não há alunos avaliados nesta turma. Cadastre alunos, matricule na turma e salve uma avaliação do professor ou autoavaliação para liberar o ciclo.</div><div class="grid2"><button class="btn ghost" data-demo-ia="amarelo">Simular Amarelo</button><button class="btn ghost" data-demo-ia="verde">Simular Verde</button><button class="btn ghost" data-demo-ia="azul">Simular Azul</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div><div id="plano-ia-conteudo"></div></div></details>`;
+          aiPane.innerHTML=`${gerarPlanoDeAulaHtml(id,ids,aiContext)}<details class="bf-completo"><summary>Ver treino completo</summary><div class="form">${supportPanel}<div class="empty">Ainda não há alunos avaliados nesta turma. Cadastre alunos, matricule na turma e salve uma avaliação do professor ou autoavaliação para liberar o ciclo.</div><details class="callout"><summary style="font-weight:900">Simulações</summary><div class="grid2" style="margin-top:.7rem"><button class="btn ghost" data-demo-ia="iniciante">Simular Turma Iniciante</button><button class="btn ghost" data-demo-ia="intermediaria">Simular Turma Intermediária</button><button class="btn ghost" data-demo-ia="avancada">Simular Turma Avançada</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div></details><div id="plano-ia-conteudo"></div></div></details>`;
           wireAiMaterials();
           aiPane.querySelectorAll("[data-demo-ia]").forEach(b=>b.onclick=()=>{if(b.dataset.demoIa==="clear")return renderCycle();simularTreinoIA(b.dataset.demoIa,document.getElementById("plano-ia-conteudo"),Number(document.getElementById("cycleDuration").value));toast("Simulação de ciclo gerada.")});
           return;
         }
         const emptyCycle=`<div class="callout"><strong>Nenhum ciclo ativo.</strong><p class="muted" style="line-height:1.45;margin:.45rem 0 0">Escolha a duração e gere um ciclo. O primeiro treino nasce do radar técnico; o Scout final valida se houve transferência para o jogo.</p></div>`;
-        const content=current?`${cycleHeaderHtml(current)}<div id="plano-ia-conteudo" class="callout plano-ia-completo">${markdownToHtml(current.markdown||cycleMarkdown(current))}</div><div id="planEditBox" class="form hidden"><textarea id="planEditor" class="textarea" style="min-height:22rem">${esc(current.markdown||cycleMarkdown(current))}</textarea><div class="grid2"><button class="btn primary" id="savePlanEdit">Salvar edição</button><button class="btn ghost" id="cancelPlanEdit">Cancelar</button></div></div>`:`<div id="plano-ia-conteudo">${emptyCycle}</div>`;
-        aiPane.innerHTML=`${gerarPlanoDeAulaHtml(id,ids,aiContext)}<details class="bf-completo"><summary>Ver treino completo</summary><div class="form">${materials}${diagnosticHtml}${scoutImpactHtml}${durationControl}${content}<div class="grid2"><button class="btn ghost" data-demo-ia="amarelo">Simular Amarelo</button><button class="btn ghost" data-demo-ia="verde">Simular Verde</button><button class="btn ghost" data-demo-ia="azul">Simular Azul</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div><button class="btn primary" id="llmPlan">Gerar ciclo com IA</button><button class="btn outline" id="regenPlan">Gerar ciclo local</button>${current?`<div class="grid2"><button class="btn outline" id="prevWeek">Semana anterior</button><button class="btn outline" id="nextWeek">Próxima semana</button></div><button class="btn outline" id="editPlan">Editar ciclo</button><button class="btn outline" id="zapClass">Enviar aula atual no WhatsApp</button>`:""}</div></details>`;
+        const content=current?cyclePocketHtml(current):`<div id="plano-ia-conteudo">${emptyCycle}</div>`;
+        aiPane.innerHTML=`${gerarPlanoDeAulaHtml(id,ids,aiContext)}<details class="bf-completo"><summary>Ver treino completo</summary><div class="form">${current?content+supportPanel:supportPanel+content}${current?`<div class="grid2"><button class="btn outline" id="prevWeek">Semana anterior</button><button class="btn outline" id="nextWeek">Próxima semana</button></div><button class="btn primary" id="zapClass">Enviar aula atual no WhatsApp</button>`:""}<details class="callout"><summary style="font-weight:900">Gerar, simular ou editar</summary><div class="form" style="margin-top:.75rem"><div class="grid2"><button class="btn ghost" data-demo-ia="iniciante">Simular Turma Iniciante</button><button class="btn ghost" data-demo-ia="intermediaria">Simular Turma Intermediária</button><button class="btn ghost" data-demo-ia="avancada">Simular Turma Avançada</button><button class="btn ghost" data-demo-ia="clear">Voltar</button></div><button class="btn primary" id="llmPlan">Gerar ciclo com IA</button><button class="btn outline" id="regenPlan">Gerar ciclo local</button>${current?`<button class="btn outline" id="editPlan">Editar ciclo</button>`:""}</div></details></div></details>`;
         wireAiMaterials();
         aiPane.querySelectorAll("[data-demo-ia]").forEach(b=>b.onclick=()=>{if(b.dataset.demoIa==="clear")return renderCycle();simularTreinoIA(b.dataset.demoIa,document.getElementById("plano-ia-conteudo"),Number(document.getElementById("cycleDuration").value));toast("Simulação de ciclo gerada.")});
-        regenPlan.onclick=async()=>{const baseCtx=prepararContextoIALocal(s.id);if(!baseCtx)return toast("Não encontrei dados para gerar o ciclo.");const ctx={...baseCtx,cycle_duration:Number(document.getElementById("cycleDuration").value)},cycle=buildCycle(ctx,ctx.cycle_duration,id);state.cycles[id]=cycle;save();await saveCycleRemote(id,cycle,cycleMarkdown(cycle));renderCycle();toast("Ciclo criado com a turma matriculada completa.")};
-        llmPlan.onclick=async()=>{const ctx={...aiContext,cycle_duration:Number(document.getElementById("cycleDuration").value)},cycle=buildCycle(ctx,ctx.cycle_duration,id);const md=await dispararGeradorTreinoIA(s.id,document.getElementById("plano-ia-conteudo"),id,cycle);if(md){cycle.markdown=md;cycle.updated_at=new Date().toISOString();state.cycles[id]=cycle;save();renderCycle();toast(AI_CFG.endpoint?"Ciclo gerado pela IA.":"Endpoint de IA não configurado: usei o ciclo local.")}};
+        regenPlan.onclick=async()=>{const baseCtx=prepararContextoIALocal(s.id);if(!baseCtx)return toast("Não encontrei dados para gerar o ciclo.");let cycle;try{const ctx={...baseCtx,cycle_duration:Number(document.getElementById("cycleDuration").value)};cycle=buildCycle(ctx,ctx.cycle_duration,id);}catch(err){return toast(err.message);}state.cycles[id]=cycle;save();await saveCycleRemote(id,cycle,cycleMarkdown(cycle));renderCycle();toast("Ciclo criado com a turma matriculada completa.")};
+        llmPlan.onclick=async()=>{let cycle;try{const ctx={...aiContext,cycle_duration:Number(document.getElementById("cycleDuration").value)};cycle=buildCycle(ctx,ctx.cycle_duration,id);}catch(err){return toast(err.message);}const md=await dispararGeradorTreinoIA(s.id,document.getElementById("plano-ia-conteudo"),id,cycle);if(md){cycle.markdown=md;cycle.updated_at=new Date().toISOString();state.cycles[id]=cycle;save();renderCycle();toast(AI_CFG.endpoint?"Ciclo gerado pela IA.":"Endpoint de IA não configurado: usei o ciclo local.")}};
         if(current){
           editPlan.onclick=()=>{document.getElementById("planEditBox").classList.remove("hidden");document.getElementById("plano-ia-conteudo").classList.add("hidden");toast("Edite o ciclo e salve para ensinar a IA.")};
           cancelPlanEdit.onclick=()=>{document.getElementById("planEditBox").classList.add("hidden");document.getElementById("plano-ia-conteudo").classList.remove("hidden")};
@@ -2101,7 +2289,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
         }
       };
       renderCycle();
-      // Ao abrir a turma, o plano de aula (aba IA) é exibido por padrão: a "lição de casa" pronta.
+      // Ao abrir a turma, a aba Plano (IA) é exibida por padrão: a "lição de casa" pronta.
       aiPane.classList.remove("hidden");presPane.classList.add("hidden");repoPane.classList.add("hidden");
       classDetail.querySelectorAll("[data-ctab]").forEach(x=>x.classList.toggle("active",x.dataset.ctab==="ai"));
       classDetail.querySelectorAll("[data-ctab]").forEach(b=>b.onclick=async()=>{
@@ -2197,47 +2385,48 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     function wireEvalForm(){const cls=document.getElementById("evalClassFilter"),sel=document.getElementById("evalStudent");if(cls&&sel)cls.onchange=()=>{let first="";sel.querySelectorAll("option").forEach(o=>{const ok=!cls.value||(o.dataset.classes||"").split(",").includes(cls.value);o.hidden=!ok;if(ok&&!first)first=o.value});if(first)sel.value=first};modalForm.querySelectorAll("[data-fill-eval]").forEach(b=>b.onclick=()=>fundamentals.forEach(f=>setEvalScore(f,b.dataset.fillEval,evalLabels[b.dataset.fillEval]||"Ok")));modalForm.querySelectorAll("[data-eval-fund]").forEach(b=>b.onclick=()=>setEvalScore(b.dataset.evalFund,b.dataset.evalScore,b.dataset.evalLabel))}
     modalForm.onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));
       const submitAction=e.submitter?.value||"save";
+      let synced=true;
       if(modalKind==="class"){
         let c=editing?klass(editing):null;
         if(c)Object.assign(c,{name:d.name,level:d.level,weekday:+d.weekday,start:d.start,capacity:+d.capacity,focus:d.focus});
-        else{c={id:uid(),name:d.name,level:d.level,weekday:+d.weekday,start:d.start,capacity:+d.capacity,focus:d.focus};state.classes.push(c)}
-        syncPushClass(c);
+        else{c={id:recordId(),name:d.name,level:d.level,weekday:+d.weekday,start:d.start,capacity:+d.capacity,focus:d.focus};state.classes.push(c)}
+        synced=(await syncPushClass(c)!==false)&&synced;
       }
       if(modalKind==="student"){
         const previousClass=editing?state.enroll.find(e=>e.student_id===editing)?.class_id:"";
-        const sid=editing||uid();
+        const sid=editing||recordId();
         let s=student(sid);
         if(s)Object.assign(s,{name:d.name,phone:d.phone,level:d.level});
         else{s={id:sid,name:d.name,phone:d.phone,level:d.level};state.students.push(s)}
-        await syncPushStudent(s);
+        synced=(await syncPushStudent(s)!==false)&&synced;
         if(previousClass&&previousClass!==d.class_id){
           state.enroll=state.enroll.filter(e=>!(e.student_id===sid&&e.class_id===previousClass));
-          syncDeleteEnrollment(previousClass,sid);
+          await syncDeleteEnrollment(previousClass,sid);
         }
         if(d.class_id&&!state.enroll.some(e=>e.class_id===d.class_id&&e.student_id===sid)){
           state.enroll.push({class_id:d.class_id,student_id:sid});
-          syncPushEnrollment(d.class_id,sid);
+          synced=(await syncPushEnrollment(d.class_id,sid)!==false)&&synced;
         }
         if(!d.class_id)state.enroll=state.enroll.filter(e=>e.student_id!==sid);
       }
       if(modalKind==="payment"){
-        const p={id:uid(),student_id:d.student_id,amount:+d.amount,due:d.due,status:"pendente",pix:d.pix||"PIX-BEACHFLOW-"+uid().toUpperCase()};
+        const p={id:recordId(),student_id:d.student_id,amount:+d.amount,due:d.due,status:"pendente",pix:d.pix||"PIX-BEACHFLOW-"+uid().toUpperCase()};
         state.payments.push(p);
-        syncPushPayment(p);
+        synced=(await syncPushPayment(p)!==false)&&synced;
       }
       if(modalKind==="ops") state.ops.unshift({id:uid(),kind:d.kind,text:d.text,resolved:false});
       if(modalKind==="eval"){
-        const newEvals=fundamentals.map(f=>({id:uid(),student_id:d.student_id,evaluator:"teacher",fundamental:f,score:+d[f]}));
-        newEvals.forEach(e=>{state.evals.push(e);syncPushEval(e);});
+        const newEvals=fundamentals.map(f=>({id:recordId(),student_id:d.student_id,evaluator:"teacher",fundamental:f,score:+d[f]}));
+        for(const evaluation of newEvals){state.evals.push(evaluation);synced=(await syncPushEval(evaluation)!==false)&&synced}
         save();
         if(submitAction==="next"){
           const sel=document.getElementById("evalStudent"),visible=[...sel.options].filter(o=>!o.hidden);
           const i=visible.findIndex(o=>o.value===d.student_id),next=visible[i+1]||visible[0];
-          if(next){sel.value=next.value;modalForm.querySelectorAll("#evalRows select").forEach(s=>s.value="6.5");toast("Avaliação salva. Próximo aluno.");return}
+          if(next){sel.value=next.value;modalForm.querySelectorAll("#evalRows select").forEach(s=>s.value="6.5");toast(synced?"Avaliação salva. Próximo aluno.":"Avaliação no aparelho; sincronização pendente.");return}
         }
       }
-      save();closeAll();toast("Salvo e sincronizado.");render()}
-    function closeAll(){document.querySelectorAll(".modal").forEach(m=>m.classList.remove("open"))}function wireCreates(){document.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>openCreate(b.dataset.create,b.dataset.id||null));document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openCreate("class",b.dataset.edit)})}
+      save();closeAll();toast(!supabaseClient?"Salvo neste aparelho.":synced?"Salvo e sincronizado.":"Salvo neste aparelho; sincronização pendente.");render()}
+    function closeAll(){if(pointModal.classList.contains("open")&&state.usageFlow?.kind==="scout_point"){const flow=state.usageFlow;state.usageFlow=null;trackUsage("scout_register_abandoned",{},flow.startedAt?Date.now()-flow.startedAt:null,flow.touches||null)}document.querySelectorAll(".modal").forEach(m=>m.classList.remove("open"))}function wireCreates(){document.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>openCreate(b.dataset.create,b.dataset.id||null));document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openCreate("class",b.dataset.edit)})}
     tabLogin.onclick=()=>{state.mode="login";nameBox.classList.add("hidden");tabLogin.classList.add("active");tabSignup.classList.remove("active")};
     tabSignup.onclick=()=>{state.mode="signup";nameBox.classList.remove("hidden");tabSignup.classList.add("active");tabLogin.classList.remove("active")};
     authForm.onsubmit=async e=>{
@@ -2270,6 +2459,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       }
       save();
       save();render();
+      trackUsage("app_open",{source:"login",display_mode:matchMedia("(display-mode: standalone)").matches?"standalone":"browser"});
       // Puxa dados do Supabase após login — garante sincronização entre dispositivos
       toast("Carregando seus dados...");
       const pulled = await syncPull();
@@ -2280,7 +2470,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       }
       render();
     };
-    logout.onclick=async()=>{if(supabaseClient)await supabaseClient.auth.signOut();state.session=false;state.page="today";save();render()};
+    logout.onclick=async()=>{trackUsage("session_closed",{page:state.page});if(supabaseClient)await supabaseClient.auth.signOut();state.session=false;state.page="today";save();render()};
     confirmToday.onclick=sendTodayConfirmations;
     document.addEventListener("click",e=>{
       const scoutStart=e.target.closest("#createMatch");
@@ -2291,20 +2481,21 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
       const selfAssessBody=document.getElementById("selfAssessBody");
       selfAssessBody.innerHTML=state.students.map(s=>`<div class="item" style="grid-template-columns:1fr auto"><div><strong>${esc(s.name)}</strong><p class="muted" style="margin:.2rem 0 0">${esc(s.level)} · ${esc(s.phone||"sem WhatsApp")}</p></div><button class="btn outline" data-sa-send="${s.id}">Enviar</button></div>`).join("");
       document.getElementById("selfAssessModal").classList.add("open");
-      selfAssessBody.querySelectorAll("[data-sa-send]").forEach(b=>b.onclick=()=>{
+      selfAssessBody.querySelectorAll("[data-sa-send]").forEach(b=>b.onclick=async()=>{
         const s=student(b.dataset.saSend);
         if(!s.phone)return toast(s.name+" não tem WhatsApp cadastrado.");
-        openZap(selfAssessMessage(s.id),s.phone);
+        try{openZap(await prepareSelfAssessMessage(s.id),s.phone)}catch(err){return toast(err.message)}
         b.textContent="Enviado ✓";b.classList.remove("outline");b.classList.add("primary");b.disabled=true;
       });
     });document.querySelectorAll(".nav").forEach(b=>b.onclick=async()=>{
-  state.page=b.dataset.page;save();render();
+  state.page=b.dataset.page;save();trackUsage("page_open",{page:state.page});render();
   // Sincroniza automaticamente ao abrir Alunos ou Aulas - pega autoavaliacoes novas antes do Ciclo IA
   if((b.dataset.page==="students"||b.dataset.page==="classes")&&supabaseClient){
     await syncPull();render();
   }
 });closeModal.onclick=closeAll;document.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeAll);document.querySelectorAll(".modal").forEach(m=>m.onclick=e=>{if(e.target===m)closeAll()});profileSelect.onchange=()=>{state.selected=profileSelect.value;save();renderStudents()};blindSelect.onchange=()=>{state.reveal=null;save();renderBlind()};// sendBlind removed — autoavaliação agora é enviada pelo aluno via link
     render();
+    if(state.session) trackUsage("app_open",{source:"saved_session",display_mode:matchMedia("(display-mode: standalone)").matches?"standalone":"browser"});
 
     // ── Supabase: restaurar sessão ativa após reload ──
     if(supabaseClient){
@@ -2317,6 +2508,7 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
           state.teacherId=sess.user.id;
           state.accessToken=sess.access_token;
           save();render();
+          trackUsage("app_open",{source:"session_restore",display_mode:matchMedia("(display-mode: standalone)").matches?"standalone":"browser"});
           // Puxa dados do Supabase ao restaurar sessão
           await syncPull();
           render();
@@ -2344,7 +2536,14 @@ GERE O CICLO EXATAMENTE NESTA ESTRUTURA:
     }
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js').then(registration=>{
+        registration.update().catch(()=>{});
+        navigator.serviceWorker.addEventListener('controllerchange',()=>{
+          if(sessionStorage.getItem('bf_sw_reloaded'))return;
+          sessionStorage.setItem('bf_sw_reloaded','1');
+          location.reload();
+        });
+      }).catch(()=>{});
     }
   </script>
 </body>
